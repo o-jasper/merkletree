@@ -79,4 +79,8 @@ information.
 
 ## TODO
 
-* Make a corresponding contract that 
+* Make a corresponding contract that merely serves a verifying function given a
+  root, leaf checksum and path.
+ 
+  + Then do the dropbox example.
+  + Possibly namereg example.
