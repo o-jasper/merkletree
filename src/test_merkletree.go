@@ -11,23 +11,6 @@ import (
 	"common"
 )
 
-//Generating chunks.
-//func rand_bytes(r *rand.Rand, n int32) []byte {
-//	out := []byte{}
-//	for i := int32(0) ; i < n ; i++ {
-//		out = append(out, byte(r.Int63n(256)))
-//	}
-//	return out
-//}
-//
-//func rand_range(r *rand.Rand, fr int32, to int32) int32 {
-//	return fr + r.Int31n(to - fr)
-//}
-//
-//func rand_chunk(r *rand.Rand, n_min int32, n_max int32) []byte {
-//	return rand_bytes(r, rand_range(r, n_min, n_max))
-//}
-
 //Add a `N` chunks and lists the tree leaves. `incp` is the probability of
 // interest in a chunk.
 func run_test(seed int64, n_min int32, n_max int32, N int, incp float64) {
