@@ -34,6 +34,7 @@ func H(a []byte) [sha256.Size]byte {
 	return sha256.Sum256(a)
 }
 
+// NOTE: if you intend to maybe change, assume H_2(a,b) != H(b,a) is REQUIRED a-priori.
 func H_2(a [sha256.Size]byte, b [sha256.Size]byte) [sha256.Size]byte {
 	return SetFirstBit(sha256.Sum256(append(tbfb(a), tbfb(b)...)), false)
 }
