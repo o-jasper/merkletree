@@ -10,6 +10,12 @@ import (
 	"common"
 )
 
+//Returns:
+// * chunk itself
+// * chunk hash
+// * path
+// * root hash
+
 func gen_data(seed int64, n_min int32, n_max int32, N int, i int) {
 	r := rand.New(rand.NewSource(seed))
 
@@ -25,13 +31,16 @@ func gen_data(seed int64, n_min int32, n_max int32, N int, i int) {
 			gen.AddChunk(chunk, false)
 		}
 	}
-	//Finish and print the root hash.
-	fmt.Println(hex.EncodeToString(gen.Finish().Hash[:]))
+	fmt.Println(hex.EncodeToString(node.Hash[:])) //Print the hash of the chunk.
+	root_hash := gen.Finish().Hash[:]
+	
 	path := node.Path() //Print the path.
 	for j := range path {
 		fmt.Print(hex.EncodeToString(path[j][:]))
 	}
 	fmt.Println()
+	//Print the root.
+	fmt.Println(hex.EncodeToString(root_hash[:]))
 }
 
 func main() {
