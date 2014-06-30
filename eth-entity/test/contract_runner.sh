@@ -28,7 +28,7 @@ fi
 
 GOT=/tmp/got
 ../../path_chunk_n_root > $GOT  # Check a merkle root
-HEXDATA=$(cat $GOT | tail -n +1 |head -n 2 | tr -d '\n')
+HEXDATA=$(cat $GOT | tail -n +2 |head -n 2 | tr -d '\n')
 echo epm transact $CONTRACT $HEXDATA
 epm transact $CONTRACT $HEXDATA
 
