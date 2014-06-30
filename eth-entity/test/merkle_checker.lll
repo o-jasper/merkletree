@@ -4,10 +4,14 @@
 
  (return 0 (lll
    {
-    [[0]] (+ @@0x0 0x20)  ;Collecting root hashes to see if they're correct.
-    [0] 1
-    (for {[0x20] 1} (< @0x20 @count) [0x20](+ @0x20 1)
-      { [@0x20] (calldataload @0x20) })
-    (call (- gas 100) checker_fub 0 0x20 (- (calldatasize) 1) @@0x0 0x20)
+    ;Fill data into memory.
+    (for {[0] 0} (< @0 (calldatasize)) {[0] (+ @0 0x20)}
+      { [(+ @0 0x20)] (calldataload @0) })
+    [0] 0xdeadbeef
+    ;Call it
+    (call (- gas 100) checker_fun 0  0 (calldatasize)  0 0x20)
+    ;Increment counter, and stuff in calculated root hash.(for future comparison)
+    [[0]]   (+ @@0 0x20)
+    [[@@0]] @0
    } 0))
 }
