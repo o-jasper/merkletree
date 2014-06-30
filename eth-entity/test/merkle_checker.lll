@@ -1,7 +1,7 @@
 
-(def 'checker_fun deployer_var)
-
 {
+ (def 'checker_fun deployer_var)
+
  (return 0 (lll
    {
     [[0]] (+ @@0x0 0x20)  ;Collecting root hashes to see if they're correct.
