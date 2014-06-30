@@ -90,9 +90,8 @@ func NewMerkleTreeGen() *MerkleTreeGen {
 	return &MerkleTreeGen{List:[]MerkleTreePortion{}}
 }
 
-// Adds chunk, returning the leaf the current is on
-func (gen *MerkleTreeGen) AddChunk(chunk []byte, interest bool) *MerkleNode {
-	h := SetFirstBit(H(chunk), interest)
+// Adds chunk with hash, returning the leaf the current is on
+func (gen *MerkleTreeGen) AddChunkH(h [sha256.Size]byte, interest bool) *MerkleNode {
 	if len(gen.List) == 0 || gen.List[0].Depth != 1 {
 		add_node := &MerkleNode{Hash:h, Left:nil, Right:nil, Up:nil}
 
@@ -115,6 +114,10 @@ func (gen *MerkleTreeGen) AddChunk(chunk []byte, interest bool) *MerkleNode {
 		}
 		return new_leaf  //Return the leaf.
 	}
+}
+// Calculates the hash for you.
+func (gen *MerkleTreeGen) AddChunk(chunk []byte, interest bool) *MerkleNode {
+	return gen.AddChunkH(SetFirstBit(H(chunk), interest), interest)
 }
 
 // Coerce the last parts together, returning the root.
