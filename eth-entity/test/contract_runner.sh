@@ -39,3 +39,6 @@ echo ====
 
 epm query $CONTRACT 0
 epm query $CONTRACT 0x20
+epm query $CONTRACT 0x40
+epm query $CONTRACT 0x60
+epm query $CONTRACT 0x80

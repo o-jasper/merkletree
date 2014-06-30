@@ -10,7 +10,7 @@
          { [(+ @0 0x20)] (calldataload @0) })
     ;Call it.
     [0] 0x1234567
-    (call (- gas 100) (checker_fun) 0  0 (calldatasize)  0 0x20)
+    (call (- (gas) 100) checker_fun 0  0x20 (calldatasize)  0 0x20)
     ;Increment counter, and stuff in calculated root hash.(for future comparison)
     [[0]]   (+ @@0 0x20)
     [[@@0]] @0
