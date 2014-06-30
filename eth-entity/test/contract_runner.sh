@@ -6,7 +6,7 @@
 # from file.
 CONTRACT="$1"
 if [ "$1" == "" ]; then
-    CONTRACT=$(cat contract_address)
+    CONTRACT=$(epm deploy deploy_checker.epm | tail -n 1 | cut -f 2 -d'>' | tr -d '"')
 fi
 
 fetch_state()
@@ -34,4 +34,8 @@ epm transact $CONTRACT $HEXDATA
 
 tail -n 1 $GOT >> expect
 
-fetch_state $CONTRACT
+#fetch_state $CONTRACT
+echo ====
+
+epm query $CONTRACT 0
+epm query $CONTRACT 0x20

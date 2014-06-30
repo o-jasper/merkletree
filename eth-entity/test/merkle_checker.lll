@@ -5,11 +5,12 @@
  (return 0 (lll
    {
     ;Fill data into memory.
-    (for {[0] 0} (< @0 (calldatasize)) {[0] (+ @0 0x20)}
-      { [(+ @0 0x20)] (calldataload @0) })
-    [0] 0xdeadbeef
-    ;Call it
-    (call (- gas 100) checker_fun 0  0 (calldatasize)  0 0x20)
+    ;(for [0]0  (< @0 (calldatasize)) [0](+ @0 0x20) {[(+ @0 0x20)](calldataload @0)}) 
+    (for {} (< @0 (calldatasize)) [0](+ @0 0x20)
+         { [(+ @0 0x20)] (calldataload @0) })
+    ;Call it.
+    [0] 0x1234567
+    (call (- gas 100) (checker_fun) 0  0 (calldatasize)  0 0x20)
     ;Increment counter, and stuff in calculated root hash.(for future comparison)
     [[0]]   (+ @@0 0x20)
     [[@@0]] @0

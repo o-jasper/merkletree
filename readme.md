@@ -79,6 +79,9 @@ information.
 
 ## TODO
 
+* Instead of appending use `bitwise_xor(a, bitwise_not(b))` or something, it is
+  faster. (matters for Ethereum entity)
+
 * Make a corresponding contract that merely serves a verifying function given a
   root, leaf checksum and path.
  
