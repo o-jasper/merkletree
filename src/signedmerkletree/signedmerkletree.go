@@ -1,4 +1,4 @@
-package data_n_privkey
+package signedmerkletree
 
 //WARNING about using this for Proof of Custody - style stuff.
 // Some pubkey signing algos might reduce to a checksum being signed, so people
@@ -25,14 +25,14 @@ func (gen *SignedMerkleTreeGen) AddChunk(chunk []byte, nonce []byte, interest bo
 }
 
 //Basically intended to create permanent complete merkle trees, 
-type PoCProver struct {
+type SignedMerkleProver struct {
 	MerkleTreeGen
 	N int64
 	Getter
 	Leaves []*MerkleNode
 }
 
-func (gen *PoCProver) AddChunk(chunk []byte) *merkletree.MerkleNode {
+func (gen *SignedMerkleProver) AddChunk(chunk []byte) *merkletree.MerkleNode {
 	cur := gen.MerkleTreeGen.AddChunk(chunk, true)
 	gen.Getter.SetNode(gen.N, cur)
 	//Note: It doesnt care how it gets set. If it is set via another way already,
@@ -41,16 +41,14 @@ func (gen *PoCProver) AddChunk(chunk []byte) *merkletree.MerkleNode {
 	gen.N += 1
 	return cur
 }
-
-
 //(finalize after adding the chunks like the above)
 
 //Prepares to prove a chunk, given a nonce and signer.
-func (gen *PoCProver) NodeNChunk(nonce []byte, signer, j Int64) *merkletree.MerkleNode, []byte {
+func (gen *SignedMerkleProver) NodeNChunk(nonce []byte, signer, j Int64) *merkletree.MerkleNode, []byte {
 	mt := merkletree.MerkleTreeGen()
 
 	node, chunk := nil.(*merkletree.MerkleNode), []byte{}
-	for i := range gen.N {
+	for i := range gen.N { //Sign all and keep an eye on the important one.
 		signed := signer.Sign(append(gen.Getter.GetChunk(i), nonce...))
 		if i == j {
 			node = mt.AddChunk(signed, true)
@@ -63,6 +61,8 @@ func (gen *PoCProver) NodeNChunk(nonce []byte, signer, j Int64) *merkletree.Merk
 	return node, chunk
 }
 
+//TODO/Note, takes the whole damn chunk & signature.. On blockchain chunks have
+// to be granular..
 func Verify(sig []byte, nonce []byte, chunk []byte, pubkey,
             root [sha256.Size]byte, sigroot [sha256.Size]byte,
 	          data *merkletree.MerkleNode, sig *merkletree.MerkleNode) bool {
