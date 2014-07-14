@@ -5,7 +5,7 @@ clean:
 	rm test_merkletree path_chunk_n_root merkletree.so
 
 test:
-		GOPATH=`pwd` go run src/test_merkletree.go -seed `date +%s`
+		GOPATH=`pwd` go run src/test_merkletree.go
 
 data:
 	GOPATH=`pwd` go run src/path_chunk_n_root.go

@@ -7,6 +7,8 @@ import (
 //	"crypto/sha256"
 	"encoding/hex"
 
+	"time"
+
 	"merkletree"
 	"common"
 )
@@ -64,7 +66,7 @@ func run_test(seed int64, n_min int32, n_max int32, N int, incp float64) {
 
 func main() {
 	var seed int64
-	flag.Int64Var(&seed, "seed", rand.Int63(), "Random seed for test.")
+	flag.Int64Var(&seed, "seed", time.Now().UnixNano(), "Random seed for test.")
 	var n_min int64
 	flag.Int64Var(&n_min, "n_min", 1, "Minimum length of random chunk.")
 	var n_max int64
