@@ -1,3 +1,4 @@
+
 package merkletree
 
 import (
@@ -17,9 +18,17 @@ func SetFirstBit(hash [sha256.Size]byte, to bool) [sha256.Size]byte {
 
 //Copies it.. because no go stuff for that ><
 func to_byte256(x []byte) [sha256.Size]byte {
-	//assert len(x)==sha256.size
+	//assert len(x) <= sha256.size
 	var ret [sha256.Size]byte
-	copy(ret[:], x)
+	i := 0
+	for i < len(x) {
+		ret[i] = x[i]
+		i += 1
+	}
+	for i < sha256.Size {
+		ret[i] = 0
+		i += 1
+	}
 	return ret
 }
 
@@ -90,7 +99,7 @@ func NewMerkleTreeGen() *MerkleTreeGen {
 	return &MerkleTreeGen{List:[]MerkleTreePortion{}}
 }
 
-// Adds chunk with hash, returning the leaf the current is on
+// Adds chunk where you calculated the hash, returning the leaf the current is on.
 func (gen *MerkleTreeGen) AddChunkH(h [sha256.Size]byte, interest bool) *MerkleNode {
 	if len(gen.List) == 0 || gen.List[0].Depth != 1 {
 		add_node := &MerkleNode{Hash:h, Left:nil, Right:nil, Up:nil}
@@ -133,8 +142,9 @@ func (gen *MerkleTreeGen) Finish() *MerkleNode {
 	return gen.List[0].Node
 }
 
-// Self-check. Not that since you can remove the rest of the nodes, this
-// essentially already does proving by paths-and-chunks.
+// Self-check from leaves to top.
+// Not that since you can remove the rest of the nodes, this essentially already
+// does proving by paths-and-chunks, `Path()` just makes a binary representation.
 func (node *MerkleNode) IsValid(recurse int32) bool {
 	if node.Left != nil && node.Right != nil {
 		if H_2(node.Left.Hash, node.Right.Hash) != SetFirstBit(node.Hash, false) {
