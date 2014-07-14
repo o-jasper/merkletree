@@ -35,8 +35,15 @@ func run_test(seed int64, n_min int32, n_max int32, N int, incp float64) {
 	j := 0
 	for i:= 0 ; i < N ; i++ {
 		chunk := common.Rand_chunk(r, n_min, n_max)
-		if !list[i].IsValid(-1) || !list[i].CorrespondsToChunk(chunk) {
-			fmt.Println("Chunk", i , "didnt check out.")
+		root, valid := list[i].IsValid(-1)
+		switch {
+		case !valid:                             fmt.Println("Merkle tree not valid internally.")
+		case !list[i].CorrespondsToChunk(chunk): fmt.Println("Chunk", i , "didnt check out.")
+		case !root.CorrespondsToHash(roothash):
+			fmt.Println("Not the correct top.", 
+				hex.EncodeToString(roothash[:]), hex.EncodeToString(root.Hash[:]))
+		case !list[i].Verify(roothash, merkletree.H(chunk)):
+			fmt.Println("Everything checked out but Verify didnt?")
 		}
 		
 		if included[i] {

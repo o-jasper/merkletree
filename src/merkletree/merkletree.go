@@ -142,24 +142,31 @@ func (gen *MerkleTreeGen) Finish() *MerkleNode {
 	return gen.List[0].Node
 }
 
-// Self-check from leaves to top.
-// Not that since you can remove the rest of the nodes, this essentially already
-// does proving by paths-and-chunks, `Path()` just makes a binary representation.
-func (node *MerkleNode) IsValid(recurse int32) bool {
+// Only checks internal consistency upward;
+// Checks a merkle path, _except_ the root and leaf.
+func (node *MerkleNode) IsValid(recurse int32) (*MerkleNode, bool) {
 	if node.Left != nil && node.Right != nil {
 		if H_2(node.Left.Hash, node.Right.Hash) != SetFirstBit(node.Hash, false) {
-			return false
+			return node, false
 		}
 	}
 	if recurse == 0 || node.Up == nil {
-		return true
+		return node, true
 	}
 	return node.Up.IsValid(recurse - 1)
 }
 
 func (node *MerkleNode) CorrespondsToChunk(chunk []byte) bool {
-	return SetFirstBit(H(chunk), false) == SetFirstBit(node.Hash, false) && 
-		     node.Right == nil && node.Left == nil
+	return node.CorrespondsToHash(H(chunk))
+}
+
+func (node *MerkleNode) CorrespondsToHash(H [sha256.Size]byte) bool {
+	return SetFirstBit(H, false) == SetFirstBit(node.Hash, false)
+}
+
+func (node* MerkleNode) Verify(Hroot [sha256.Size]byte, Hchunk [sha256.Size]byte) bool {
+	root, internal := node.IsValid(-1)
+	return internal && root.CorrespondsToHash(Hroot) && node.CorrespondsToHash(Hchunk)
 }
 
 // Calculated paths essentially make a compilation of the data needed to do the
