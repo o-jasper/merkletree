@@ -54,7 +54,7 @@ func run_test(seed int64, n_min int32, n_max int32, N int, incp float64) {
 //		root := merkletree.ExpectedRoot(merkletree.H(chunk), path)
 //		fmt.Println(hex.EncodeToString(root[:]))
 			
-			if !merkletree.CorrectRoot(roothash, chunk, path) {
+			if !merkletree.Verify(roothash, chunk, path) {
 				fmt.Println(" - One of the Merkle Paths did not check out!")
 			}
 			j += 1

@@ -211,6 +211,6 @@ func ExpectedRoot(H_leaf [sha256.Size]byte, path [][sha256.Size]byte) [sha256.Si
 }
 
 //Checks a root.
-func CorrectRoot(root [sha256.Size]byte, leaf []byte, path [][sha256.Size]byte) bool {
+func Verify(root [sha256.Size]byte, leaf []byte, path [][sha256.Size]byte) bool {
 	return SetFirstBit(ExpectedRoot(H(leaf), path), false) == SetFirstBit(root, false)
 }

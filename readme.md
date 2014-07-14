@@ -56,7 +56,7 @@ checksum of the a leaf corresponds to the root checksum.
 
 Returns the root expected, based on the leaf hash, and path.
 
-    func CorrectRoot(root [sha256.Size]byte, leaf []byte, path [][sha256.Size]byte) bool
+    func Verify(root [sha256.Size]byte, leaf []byte, path [][sha256.Size]byte) bool
     
 Returns whether the root is correct, given the leaf chunk and path.
 
