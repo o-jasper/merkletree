@@ -63,40 +63,20 @@ func (gen *PoCProver) NodeNChunk(nonce []byte, signer, j Int64) *merkletree.Merk
 	return node, chunk
 }
 
-//Items needed to prove:
-// * Regular Merkle path.
-// * Nonced&signed-leafs - Merkle path.
-// * Signed leaf
-//
-//Actions:
-// * Check the paths.
-//   + The steps
-//   + Correspondence to roots.
-//   + Correspondence to leaves.
-// * Check the signature.
-
-
-/*
-func (interest *DataNPrivKeyInterest) IsValid(recurse int32) *DataNPrivKeyInterest, bool {
-	s, svalid := interest.Sigs.IsValid(recurse)
-	d, dvalid := interest.Data.IsValid(recurse)  // NOTE crosscheck left/right paths sequence?
-	return &DataNPrivKeyInterest{Sigs:s, Data:d}, svalid && dvalid
+func Verify(sig []byte, nonce []byte, chunk []byte, pubkey,
+            root [sha256.Size]byte, sigroot [sha256.Size]byte,
+	          data *merkletree.MerkleNode, sig *merkletree.MerkleNode) bool {
+	switch {
+		//Check that the signature applies.
+	case !pubkey.VerifySignature(append(chunk, nonce...), sig):
+		return false
+		//Check that the Merkle path is right.
+	case !data.Verify(merkletree.H(chunk), root) || sig.Verify(merkletree.H(sig), sigroot):
+		return false
+	default:
+		return true
+	}
 }
-
-func (interest *DataNPrivKeyInterest) CorrespondsToPubkey(pubkey interface{}) bool {
-	return pubkey.Verify(interest.ChunkSig, interest.Chunk)
-}
-
-func (interest *DataNPrivKeyInterest) Verify(Hts [sha256.Size]byte, Htd [sha256.Size]byte, pubkey interface) bool {
-	root, internal := interest.IsValid(-1)
-	return (internal && 
-		interest.CorrespondsToPubkey(pubkey) && 
-		root.Sigs.CorrespondsToHash(Hts) && 
-		root.Data.CorrespondsToHash(Htd) &&
-		interest.Sig.CorrespondsToChunk(Interest.ChunkSig) &&
-		interest.Data.CorrespondsToChunk(Interest.Chunk))
-}
-*/
 
 // Simple getter for it, two maps.
 type SimpleGetter struct {
