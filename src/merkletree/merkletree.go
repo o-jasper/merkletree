@@ -145,15 +145,15 @@ func (gen *MerkleTreeGen) Finish() *MerkleNode {
 // Only checks internal consistency upward;
 // Checks a merkle path, _except_ the root and leaf.
 func (node *MerkleNode) IsValid(recurse int32) (*MerkleNode, bool) {
-	if node.Left != nil && node.Right != nil {
-		if H_2(node.Left.Hash, node.Right.Hash) != SetFirstBit(node.Hash, false) {
-			return node, false
-		}
-	}
-	if recurse == 0 || node.Up == nil {
+	switch {
+	case node.Left != nil && node.Right != nil &&
+		   H_2(node.Left.Hash, node.Right.Hash) != SetFirstBit(node.Hash, false):
+		return node, false
+	case recurse == 0 || node.Up == nil:
 		return node, true
+	default:
+		return node.Up.IsValid(recurse - 1)
 	}
-	return node.Up.IsValid(recurse - 1)
 }
 
 func (node *MerkleNode) CorrespondsToChunk(chunk []byte) bool {
@@ -172,12 +172,10 @@ func (node* MerkleNode) Verify(Hroot [sha256.Size]byte, Hchunk [sha256.Size]byte
 // Calculated paths essentially make a compilation of the data needed to do the
 // check. 
 func (node *MerkleNode) Path() [][sha256.Size]byte {
-	if node.Right != nil || node.Left != nil {
-		return [][sha256.Size]byte{}
-	} else if node.Up == nil {
-		return [][sha256.Size]byte{}
-	} else {
-		return node.Up.path(node)
+	switch {
+	case node.Right != nil || node.Left != nil:  return [][sha256.Size]byte{}
+	case node.Up == nil:                       	 return [][sha256.Size]byte{}
+	default:                                     return node.Up.path(node)
 	}
 }
 
@@ -187,12 +185,10 @@ func (node *MerkleNode) path(from *MerkleNode) [][sha256.Size]byte {
 		path = node.Up.path(node)
 	}
 
-	if node.Right == from { //Came from right.
-		return append(path, SetFirstBit(node.Left.Hash, true))
-	}	else if node.Left == from { //Came from left.
-		return append(path, SetFirstBit(node.Right.Hash, false))
-	}	else { // Information was not stored, or invalid Merkle tree.
-		return [][sha256.Size]byte{}
+	switch {
+	case node.Right == from:  return append(path, SetFirstBit(node.Left.Hash, true))
+	case node.Left == from:   return append(path, SetFirstBit(node.Right.Hash, false))
+	default:                  return [][sha256.Size]byte{} // Invalid Merkle tree.
 	}
 }
 
@@ -201,10 +197,9 @@ func ExpectedRoot(H_leaf [sha256.Size]byte, path [][sha256.Size]byte) [sha256.Si
 	x := H_leaf
 	for i := range path {
 		h := path[len(path) - i - 1]
-		if FirstBit(h) {
-			x = H_2(h, x)
-		} else {
-			x = H_2(x, h)
+		switch {
+		case FirstBit(h):  x = H_2(h, x)
+		default:           x = H_2(x, h)
 		}
 	}
 	return x
