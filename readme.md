@@ -1,12 +1,12 @@
 ## Merkle tree creator
-The merkle tree should eat 'chunks' and put them on the leaves. It is intended
-to be able to mark chunks as interesting, so it doesnt have to actually store
-the whole thing.
+The merkle tree should eat 'chunks' and put them on the leaves. It is able to
+mark chunks as interesting, so it doesnt have to actually store the whole thing.
 
 This is useful for where large portions of the merkle tree are infact simply
 calculated entries.
 
-The Ethereum contract merely has to check.
+The Ethereum contract merely has to check if the leaf, path and root connect
+correctly.
 
 #### Uses
 
@@ -60,11 +60,16 @@ Returns the root expected, based on the leaf hash, and path.
     
 Returns whether the root is correct, given the leaf chunk and path.
 
-**The following two** are sort-of alternative ways to use paths, they use parts
+**The following three** are sort-of alternative ways to use paths, they use parts
 of the constructed tree. However, the above are provided because you need a way
-to get the data is a simp;e binary format.
+to get the data is a simple binary format.
 
-    func (node *MerkleNode) IsValid(recurse int32) bool
+    func (node* MerkleNode) Verify(Hroot [sha256.Size]byte, Hchunk [sha256.Size]byte) bool
+   
+Verifies the whole thing, given a node that was indicated as interesting, the
+root hash and the leaf hash.
+
+    func (node *MerkleNode) IsValid(recurse int32) MerkleNode, bool
 
 Tells you if the known tree upward from the given merkle node by the given
 recursions are valid. `recurse < 0` means that it will recurse all the way.
