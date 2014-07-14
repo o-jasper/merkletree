@@ -37,7 +37,7 @@ func (gen *SignedMerkleProver) AddChunk(chunk []byte) *merkletree.MerkleNode {
 	gen.Getter.SetNode(gen.N, cur)
 	//Note: It doesnt care how it gets set. If it is set via another way already,
 	// just make it to do nothing.
-	gen.Getter.PoCProveSetChunk(gen.N, chunk)
+	gen.Getter.SignedMerkleProver_SetChunk(gen.N, chunk)
 	gen.N += 1
 	return cur
 }
@@ -91,9 +91,22 @@ func (sg *SimpleGetter) GetNode(i int64) *merkletree.MerkleNode {
 	return sg.Nodes[i]
 }
 
-func (sg *SimpleGetter) PoCProveSetChunk(i int64, chunk []byte) { 
+func (sg *SimpleGetter) SignedMerkleProver_SetChunk(i int64, chunk []byte) { 
 	sg.Chunks[i] = chunk
 }
 func (sg *SimpleGetter) GetChunk(i int64) []byte {
 	return sh.Chunks[i]
+}
+
+//    func Sign(rand io.Reader, priv *PrivateKey, hash []byte) (r, s *big.Int, err error)
+//    func Verify(pub *PublicKey, hash []byte, r, s *big.Int) bool
+
+type EcdsaSigner struct {
+	Priv *ecdsa.PrivateKey
+}
+
+func (signer EcdsaSigner) Sign(input []byte) {
+	
+	//r, s, err := ecdsa.Sign(  , signer.Priv, input)
+	
 }
