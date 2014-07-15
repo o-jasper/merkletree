@@ -1,4 +1,4 @@
-package common
+package test_common
 
 import "math/rand"
 

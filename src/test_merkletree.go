@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"merkletree"
-	"common"
+	"merkletree/test_common"
 )
 
 //Add a `N` chunks and lists the tree leaves. `incp` is the probability of
@@ -23,7 +23,7 @@ func run_test(seed int64, n_min int32, n_max int32, N int, incp float64) {
 	list := []*merkletree.MerkleNode{}
 	included := []bool{}
 	for i:= 0 ; i < N ; i++ {
-		chunk := common.Rand_chunk(r, n_min, n_max)
+		chunk := test_common.Rand_chunk(r, n_min, n_max)
 		include_this := (rand.Float64() <= incp)
 		list = append(list, gen.AddChunk(chunk, include_this))
 		included = append(included, include_this)
@@ -36,7 +36,7 @@ func run_test(seed int64, n_min int32, n_max int32, N int, incp float64) {
 	r = rand.New(rand.NewSource(seed))
 	j := 0
 	for i:= 0 ; i < N ; i++ {
-		chunk := common.Rand_chunk(r, n_min, n_max)
+		chunk := test_common.Rand_chunk(r, n_min, n_max)
 		root, valid := list[i].IsValid(-1)
 		switch {
 		case !valid:                             fmt.Println("Merkle tree not valid internally.")
