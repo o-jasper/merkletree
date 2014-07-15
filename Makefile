@@ -4,8 +4,13 @@ default: test build
 clean:
 	rm test_merkletree path_chunk_n_root merkletree.so
 
-test:
+test: test_merkle test_signed
+
+test_merkle:
 		GOPATH=`pwd` go run src/test_merkletree.go
+
+test_signed:
+		GOPATH=`pwd` go run src/test_signed_merkletree.go
 
 data:
 	GOPATH=`pwd` go run src/path_chunk_n_root.go

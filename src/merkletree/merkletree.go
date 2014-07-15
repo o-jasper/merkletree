@@ -95,8 +95,8 @@ type MerkleTreeGen struct {
 	List []MerkleTreePortion
 }
 
-func NewMerkleTreeGen() *MerkleTreeGen {
-	return &MerkleTreeGen{List:[]MerkleTreePortion{}}
+func NewMerkleTreeGen() MerkleTreeGen {
+	return MerkleTreeGen{List:[]MerkleTreePortion{}}
 }
 
 // Adds chunk where you calculated the hash, returning the leaf the current is on.
