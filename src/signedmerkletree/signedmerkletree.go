@@ -9,29 +9,17 @@ import (
 	"merkletree"
 //	"crypto"
 	"crypto/sha256"
+	"crypto/rand"
 )
-
-type SignedMerkleTreeGen struct {  //Same As merkletree.MerkleTreeGen, but signs it first.
-	Signer
-	MerkleTreeGen
-}
-
-func (gen *SignedMerkleTreeGen) LeafChunk(chunk []byte, nonce []byte) []byte {
-	return gen.Signer.Sign(append(chunk, nonce...))
-}
-
-func (gen *SignedMerkleTreeGen) AddChunk(chunk []byte, nonce []byte, interest bool) *merkletree.MerkleNode {
-	return gen.MerkleTreeGen.AddChunk(gen.LeafChunk(chunk, nonce), interest)
-}
 
 //Basically intended to create permanent complete merkle trees, 
 type SignedMerkleProver struct {
 	MerkleTreeGen
 	N int64
 	Getter
-	Leaves []*MerkleNode
 }
 
+//Adds non-signed chunks.
 func (gen *SignedMerkleProver) AddChunk(chunk []byte) *merkletree.MerkleNode {
 	cur := gen.MerkleTreeGen.AddChunk(chunk, true)
 	gen.Getter.SetNode(gen.N, cur)
@@ -51,7 +39,7 @@ func (gen *SignedMerkleProver) NodeNChunk(nonce []byte, signer, j Int64) *merkle
 	for i := range gen.N { //Sign all and keep an eye on the important one.
 		signed := signer.Sign(append(gen.Getter.GetChunk(i), nonce...))
 		if i == j {
-			node = mt.AddChunk(signed, true)
+			node = mt.AddChunk(signed, true)  //The one to keep an eye on.
 			chunk = signed
 		} else {
 			mt.AddChunk(signed, false)
@@ -61,7 +49,7 @@ func (gen *SignedMerkleProver) NodeNChunk(nonce []byte, signer, j Int64) *merkle
 	return node, chunk
 }
 
-//TODO/Note, takes the whole damn chunk & signature.. On blockchain chunks have
+//TODO/Note, takes the whole damn chunk & signature.. Or blockchain chunks have
 // to be granular..
 func Verify(sig []byte, nonce []byte, chunk []byte, pubkey,
             root [sha256.Size]byte, sigroot [sha256.Size]byte,
@@ -105,8 +93,22 @@ type EcdsaSigner struct {
 	Priv *ecdsa.PrivateKey
 }
 
-func (signer EcdsaSigner) Sign(input []byte) {
-	
-	//r, s, err := ecdsa.Sign(  , signer.Priv, input)
-	
+func (signer EcdsaSigner) Sign(input []byte) []byte {
+	r, s, _ := ecdsa.Sign(rand.Reader, signer.Priv, input)
+	rd := r.([]byte)
+	sd := s.([]byte)
+	lens := []byte{len(rd)}
+	return append(append(lens, rd...), sd...)
+}
+
+type EcdsaPubkey struct {
+	Pub *ecdsa.PublicKey
+}
+
+func (pubkey EcdsaPubkey) VerifySignature(sig []byte) bool {
+	lr, ls = sig[0], sig[1]
+	r := sig[2 : 2 + lr].(big.Int)  // Recover stuff from the signature + data.
+	s := sig[2 + lr: 2 + lr + ls].(big.Int)
+	hash := sig[2 + lr + ls:]
+	return Verify(pubkey.Pub, hash, r, s)
 }
