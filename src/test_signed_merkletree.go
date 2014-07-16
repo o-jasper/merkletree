@@ -12,7 +12,7 @@ import (
 	"merkletree/test_common"
 
 	"signed_merkletree"
-	"signed_merkletree/signed_merkletree_compliers"
+	"signed_merkletree/signed_merkletree_pubkey"
 )
 
 //Add a `N` chunks and lists the tree leaves. `incp` is the probability of
@@ -32,7 +32,7 @@ func run_test(seed int64, n_min int32, n_max int32, N int, times int, subtimes i
 	fmt.Println("---")
 
 	// Set up signer.
-	signer, pubkey := signed_merkletree_compliers.GenerateKey()
+	signer, pubkey := signed_merkletree_pubkey.GenerateKey()
 
 	for i:= 0 ; i < times ; i++ {
 		// First part of challenge is a nonce.

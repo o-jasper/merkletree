@@ -1,6 +1,6 @@
 //Note: really this is basically more general than just for this thing...
 // (why didnt go come like this?.. Unclear to me)
-package signed_merkletree_compliers
+package signed_merkletree_pubkey
 
 import (
 	"crypto/ecdsa"
