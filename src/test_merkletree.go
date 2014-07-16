@@ -44,8 +44,10 @@ func run_test(seed int64, n_min int32, n_max int32, N int, incp float64) {
 		case !root.CorrespondsToHash(roothash):
 			fmt.Println("Not the correct top.", 
 				hex.EncodeToString(roothash[:]), hex.EncodeToString(root.Hash[:]))
-		case !list[i].Verify(roothash, merkletree.H(chunk)):
-			fmt.Println("Everything checked out but Verify didnt?")
+		default:
+			if r := list[i].Verify(roothash, merkletree.H(chunk)); r != merkletree.Correct {
+				fmt.Println("Everything checked out but Verify didnt?", r)
+			}
 		}
 		
 		if included[i] {

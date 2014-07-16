@@ -164,9 +164,28 @@ func (node *MerkleNode) CorrespondsToHash(H [sha256.Size]byte) bool {
 	return SetFirstBit(H, false) == SetFirstBit(node.Hash, false)
 }
 
-func (node* MerkleNode) Verify(Hroot [sha256.Size]byte, Hchunk [sha256.Size]byte) bool {
+type Validity int8
+
+const ( //Not all functions will do all of them.
+	Correct Validity = iota
+	SomeThingWrong
+	WrongSig
+	WrongChunkPath
+	WrongChunkLeaf
+	WrongChunkRoot
+	WrongSigPath
+	WrongSigLeaf
+	WrongSigRoot
+)
+
+func (node* MerkleNode) Verify(Hroot, Hchunk [sha256.Size]byte) Validity {
 	root, internal := node.IsValid(-1)
-	return internal && root.CorrespondsToHash(Hroot) && node.CorrespondsToHash(Hchunk)
+	switch {
+	case !internal:                       return WrongChunkPath
+	case !node.CorrespondsToHash(Hchunk): return WrongSigLeaf
+	case !root.CorrespondsToHash(Hroot):  return WrongChunkRoot
+	default:                              return Correct
+	}
 }
 
 // Calculated paths essentially make a compilation of the data needed to do the
