@@ -44,7 +44,7 @@ func H(a []byte) [sha256.Size]byte {
 }
 
 // NOTE: if you intend to maybe change, assume H_2(a,b) != H(b,a) is REQUIRED a-priori.
-func H_2(a [sha256.Size]byte, b [sha256.Size]byte) [sha256.Size]byte {
+func H_2(a, b [sha256.Size]byte) [sha256.Size]byte {
 	return SetFirstBit(sha256.Sum256(append(tbfb(a), tbfb(b)...)), false)
 }
 
@@ -60,7 +60,7 @@ func (self *MerkleNode) interest() bool {  // Even/odd is whether interest.
 	return FirstBit(self.Hash)
 }
 
-func new_MerkleNode(left *MerkleNode,right *MerkleNode) *MerkleNode {
+func new_MerkleNode(left, right *MerkleNode) *MerkleNode {
 	hash := SetFirstBit(H_2(left.Hash, right.Hash), left.interest() || right.interest())
 	node := &MerkleNode{Hash:hash, Left:left, Right:right, Up:nil}
 	left.Up  = node
@@ -68,7 +68,7 @@ func new_MerkleNode(left *MerkleNode,right *MerkleNode) *MerkleNode {
 	return node
 }
 
-func selective_new_MerkleNode(left *MerkleNode,right *MerkleNode) *MerkleNode {
+func selective_new_MerkleNode(left, right *MerkleNode) *MerkleNode {
 	node := new_MerkleNode(left, right)
 	node.Left.effect_interest()
 	node.Right.effect_interest()
@@ -164,21 +164,25 @@ func (node *MerkleNode) CorrespondsToHash(H [sha256.Size]byte) bool {
 	return SetFirstBit(H, false) == SetFirstBit(node.Hash, false)
 }
 
-type Validity int8
+// Used to run Chunk path errors into Sig (path) errors.
+const Merkletree_NPathWrongs = int8(3)
 
-const ( //Not all functions will do all of them.
-	Correct Validity = iota
-	SomeThingWrong
-	WrongSig
+const ( //NOTE: Not all functions will do all of them. Move some about signatures?
+	Correct int8 = iota
+
 	WrongChunkPath
 	WrongChunkLeaf
 	WrongChunkRoot
+
 	WrongSigPath
 	WrongSigLeaf
 	WrongSigRoot
+
+	WrongSomeThing
+	WrongSig
 )
 
-func (node* MerkleNode) Verify(Hroot, Hchunk [sha256.Size]byte) Validity {
+func (node* MerkleNode) Verify(Hroot, Hchunk [sha256.Size]byte) int8 {
 	root, internal := node.IsValid(-1)
 	switch {
 	case !internal:                       return WrongChunkPath
