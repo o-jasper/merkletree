@@ -182,7 +182,7 @@ const ( //NOTE: Not all functions will do all of them. Move some about signature
 	WrongSig
 )
 
-func (node* MerkleNode) Verify(Hroot, Hchunk [sha256.Size]byte) int8 {
+func (node* MerkleNode) VerifyH(Hroot, Hchunk [sha256.Size]byte) int8 {
 	root, internal := node.IsValid(-1)
 	switch {
 	case !internal:                       return WrongChunkPath
@@ -190,6 +190,9 @@ func (node* MerkleNode) Verify(Hroot, Hchunk [sha256.Size]byte) int8 {
 	case !root.CorrespondsToHash(Hroot):  return WrongChunkRoot
 	default:                              return Correct
 	}
+}
+func (node* MerkleNode) Verify(Hroot [sha256.Size]byte, chunk []byte) int8 {
+	return node.VerifyH(Hroot, H(chunk))
 }
 
 // Calculated paths essentially make a compilation of the data needed to do the
@@ -229,6 +232,10 @@ func ExpectedRoot(H_leaf [sha256.Size]byte, path [][sha256.Size]byte) [sha256.Si
 }
 
 //Checks a root.
-func Verify(root [sha256.Size]byte, leaf []byte, path [][sha256.Size]byte) bool {
-	return SetFirstBit(ExpectedRoot(H(leaf), path), false) == SetFirstBit(root, false)
+func VerifyH(root, Hleaf [sha256.Size]byte, path [][sha256.Size]byte) bool {
+	return SetFirstBit(ExpectedRoot(Hleaf, path), false) == SetFirstBit(root, false)
 }
+func Verify(root [sha256.Size]byte, leaf []byte, path [][sha256.Size]byte) bool {
+	return VerifyH(root, H(leaf), path)
+}
+
