@@ -75,7 +75,7 @@ func (gen *SignedMerkleProver) NewSignedMerkleProof_FromIndex(signed *SignedMerk
 // to be granular..
 func (proof *SignedMerkleProof) Verify(nonce []byte, pubkey Pubkey, root [sha256.Size]byte, sig_root [sha256.Size]byte) int8 {
 	//Check that the signature applies.
-	if !pubkey.VerifySignature(proof.sig_chunk, append(proof.chunk, nonce...)) { //TODO TODO!
+	if !pubkey.VerifySignature(proof.sig_chunk, append(proof.chunk, nonce...)) {
 		return merkletree.WrongSig
 	} else { //Check that the Merkle paths are right.
 		if r := proof.sig_node.Verify(sig_root, proof.sig_chunk) ; r == merkletree.Correct {

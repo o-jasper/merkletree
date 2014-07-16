@@ -68,9 +68,9 @@ func main() {
 	var N int
 	flag.IntVar(&N, "N", 80, "Number of chunks.")
 	var times int
-	flag.IntVar(&times, "times", 8, "Number of times to challenge.")
+	flag.IntVar(&times, "times", 16, "Number of times to challenge.")
 	var subtimes int
-	flag.IntVar(&subtimes, "subtimes", 4, "Number of indices per challenge.")
+	flag.IntVar(&subtimes, "subtimes", 8, "Number of indices per challenge.")
 	
 	flag.Parse()
 
