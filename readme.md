@@ -96,3 +96,4 @@ information.
   + Possibly namereg example.
 
 * The above docs could look better.
+* Negative result tests.
