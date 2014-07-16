@@ -8,7 +8,7 @@ import (
 
 	"time"
 
-//	"merkletree"
+	"merkletree"
 	"merkletree/test_common"
 
 	"signed_merkletree"
@@ -26,6 +26,7 @@ func run_test(seed int64, n_min int32, n_max int32, N int, times int, subtimes i
 		gen.AddChunk(test_common.Rand_chunk(r, n_min, n_max))
 	}
 	root := gen.Finish()  //Get the root hash.
+	fmt.Println("")
 	fmt.Println("Root:", hex.EncodeToString(root.Hash[:]))
 
 	fmt.Println("---")
@@ -33,29 +34,28 @@ func run_test(seed int64, n_min int32, n_max int32, N int, times int, subtimes i
 	// Set up signer.
 	signer, pubkey := signed_merkletree_compliers.GenerateKey()
 
-	j := 0
 	for i:= 0 ; i < times ; i++ {
 		// First part of challenge is a nonce.
 		nonce := test_common.Rand_chunk(r, n_min, n_max)
 		// Respond with root of the signed merkle tree.
 		sigroot, smp:= gen.AddAllSigned(nonce, signer)
+
 		for i2 := 0 ; i2 < subtimes ; i2++ {
 			// (Nothing to check yet) Second part is randomly pick chunk.
 			j := rand.Int63n(int64(N))
 			
 			// Create response:(the one that will be tested)
 			// Regular and signature node.
-			node, sig_node := gen.Getter.GetNode(j), smp.Getter.GetNode(j)
-			chunk, sig := gen.Getter.GetChunk(j), smp.Getter.GetChunk(j)
-			
+			proof := gen.NewSignedMerkleProof_FromIndex(smp, j)
 			//Verify it.
-			if !signed_merkletree.Verify(sig, chunk, nonce, pubkey, root.Hash, sigroot.Hash, node, sig_node) {
-				fmt.Println("Didnt work")
+			if r := proof.Verify(nonce, pubkey, root.Hash, sigroot.Hash); r != merkletree.Correct {
+				fmt.Println("Didnt work", r, ";", i, i2)
 			}
 		}
 	}
 	fmt.Println("---")
-	fmt.Println("No messages above implies success. Had", j)
+	fmt.Println("No messages above implies success.")
+	fmt.Println("times", times, "subtimes", subtimes, "N", N)
 }
 
 func main() {
@@ -66,9 +66,9 @@ func main() {
 	var n_max int64
 	flag.Int64Var(&n_max, "n_max", 256, "Maximum length of random chunk.")
 	var N int
-	flag.IntVar(&N, "N", 256, "Number of chunks.")
+	flag.IntVar(&N, "N", 80, "Number of chunks.")
 	var times int
-	flag.IntVar(&times, "times", 256, "Number of times to challenge.")
+	flag.IntVar(&times, "times", 8, "Number of times to challenge.")
 	var subtimes int
 	flag.IntVar(&subtimes, "subtimes", 4, "Number of indices per challenge.")
 	

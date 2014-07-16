@@ -50,26 +50,39 @@ func (gen *SignedMerkleProver) AddChunk(chunk []byte) *merkletree.MerkleNode {
 // Prepares to prove a chunk, given a nonce and signer.
 func (gen *SignedMerkleProver) AddAllSigned(nonce []byte, signer Signer) (*merkletree.MerkleNode, *SignedMerkleProver) {
 	smp := NewSignedMerkleProver()
-	for i := int64(0) ; i < gen.N ; i++ {
-		smp.AddChunk(signer.Sign(append(gen.Getter.GetChunk(i), nonce...)))
+	for smp.N < gen.N {
+		smp.AddChunk(signer.Sign(append(gen.Getter.GetChunk(smp.N), nonce...)))
 	}
 	return smp.Finish(), &smp
 }
 
+type SignedMerkleProof struct {
+	node      *merkletree.MerkleNode
+	sig_node  *merkletree.MerkleNode
+	chunk     []byte
+	sig_chunk []byte
+}
+
+func (gen *SignedMerkleProver) NewSignedMerkleProof_FromIndex(signed *SignedMerkleProver, index int64) SignedMerkleProof {
+	return SignedMerkleProof{ 
+		node      : gen.Getter.GetNode(index),
+		sig_node  : signed.Getter.GetNode(index),
+		chunk     : gen.Getter.GetChunk(index),
+		sig_chunk : signed.Getter.GetChunk(index) }
+}
+
 //TODO/NOTE, takes the whole damn chunk & signature.. Or blockchain chunks have
 // to be granular..
-func Verify(sig []byte, chunk []byte, nonce []byte, pubkey Pubkey,
-            root [sha256.Size]byte, sigroot [sha256.Size]byte,
-            node *merkletree.MerkleNode, sig_node *merkletree.MerkleNode) bool {
-	switch {
-		//Check that the signature applies.
-	case !pubkey.VerifySignature(sig, append(chunk, nonce...)):
-		return false
-		//Check that the Merkle path is right.
-	case !node.Verify(merkletree.H(chunk), root) || sig_node.Verify(merkletree.H(sig), sigroot):
-		return false
-	default:
-		return true
+func (proof *SignedMerkleProof) Verify(nonce []byte, pubkey Pubkey, root [sha256.Size]byte, sig_root [sha256.Size]byte) int8 {
+	//Check that the signature applies.
+	if !pubkey.VerifySignature(proof.sig_chunk, append(proof.chunk, nonce...)) { //TODO TODO!
+		return merkletree.WrongSig
+	} else { //Check that the Merkle paths are right.
+		if r := proof.sig_node.Verify(sig_root, proof.sig_chunk) ; r == merkletree.Correct {
+			return proof.node.Verify(root, proof.chunk) //It takes over.
+		} else { //Makes it the Signature path error version.
+			return r + merkletree.Merkletree_NPathWrongs
+		}
 	}
 }
 
