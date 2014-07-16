@@ -87,7 +87,6 @@ type MerkleTreePortion struct { //Subtree in there somewhere.
 	Depth  int
 }
 
-
 //The algo is to make a 'mountain range'(forgot link)
 // and put the latest together if we have them. Meanwhile, it creates a tree, but
 // drops anything in which there is no interest.
@@ -125,8 +124,8 @@ func (gen *MerkleTreeGen) AddChunkH(h [sha256.Size]byte, interest bool) *MerkleN
 	}
 }
 // Calculates the hash for you.
-func (gen *MerkleTreeGen) AddChunk(chunk []byte, interest bool) *MerkleNode {
-	return gen.AddChunkH(SetFirstBit(H(chunk), interest), interest)
+func (gen *MerkleTreeGen) AddChunk(leaf []byte, interest bool) *MerkleNode {
+	return gen.AddChunkH(SetFirstBit(H(leaf), interest), interest)
 }
 
 // Coerce the last parts together, returning the root.
@@ -156,23 +155,23 @@ func (node *MerkleNode) IsValid(recurse int32) (*MerkleNode, bool) {
 	}
 }
 
-func (node *MerkleNode) CorrespondsToChunk(chunk []byte) bool {
-	return node.CorrespondsToHash(H(chunk))
+func (node *MerkleNode) CorrespondsToChunk(leaf []byte) bool {
+	return node.CorrespondsToHash(H(leaf))
 }
 
 func (node *MerkleNode) CorrespondsToHash(H [sha256.Size]byte) bool {
 	return SetFirstBit(H, false) == SetFirstBit(node.Hash, false)
 }
 
-// Used to run Chunk path errors into Sig (path) errors.
+// Used to run Data path errors into Sig (path) errors.
 const Merkletree_NPathWrongs = int8(3)
 
 const ( //NOTE: Not all functions will do all of them. Move some about signatures?
 	Correct int8 = iota
 
-	WrongChunkPath
-	WrongChunkLeaf
-	WrongChunkRoot
+	WrongDataPath
+	WrongDataLeaf
+	WrongDataRoot
 
 	WrongSigPath
 	WrongSigLeaf
@@ -182,21 +181,25 @@ const ( //NOTE: Not all functions will do all of them. Move some about signature
 	WrongSig
 )
 
-func (node* MerkleNode) VerifyH(Hroot, Hchunk [sha256.Size]byte) int8 {
+func (node* MerkleNode) VerifyH(Hroot, Hleaf [sha256.Size]byte) int8 {
 	root, internal := node.IsValid(-1)
 	switch {
-	case !internal:                       return WrongChunkPath
-	case !node.CorrespondsToHash(Hchunk): return WrongSigLeaf
-	case !root.CorrespondsToHash(Hroot):  return WrongChunkRoot
+	case !internal:                       return WrongDataPath
+	case !node.CorrespondsToHash(Hleaf):  return WrongDataLeaf
+	case !root.CorrespondsToHash(Hroot):  return WrongDataRoot
 	default:                              return Correct
 	}
 }
-func (node* MerkleNode) Verify(Hroot [sha256.Size]byte, chunk []byte) int8 {
-	return node.VerifyH(Hroot, H(chunk))
+func (node* MerkleNode) Verify(Hroot [sha256.Size]byte, leaf []byte) int8 {
+	return node.VerifyH(Hroot, H(leaf))
 }
 
 // Calculated paths essentially make a compilation of the data needed to do the
 // check. 
+func (node *MerkleNode) ByteProof() [][sha256.Size]byte {
+	return node.Path()
+}
+
 func (node *MerkleNode) Path() [][sha256.Size]byte {
 	switch {
 	case node.Right != nil || node.Left != nil:  return [][sha256.Size]byte{}

@@ -39,8 +39,10 @@ func run_test(seed int64, n_min, n_max, N int32, incp float64) {
 		chunk := test_common.Rand_chunk(r, n_min, n_max)
 		root, valid := list[i].IsValid(-1)
 		switch {
-		case !valid:                             fmt.Println("Merkle tree not valid internally.")
-		case !list[i].CorrespondsToChunk(chunk): fmt.Println("Chunk", i , "didnt check out.")
+		case !valid:
+			fmt.Println("Merkle tree not valid internally.")
+		case !list[i].CorrespondsToChunk(chunk):
+			fmt.Println("Chunk", i , "didnt check out.")
 		case !root.CorrespondsToHash(roothash):
 			fmt.Println("Not the correct top.", 
 				hex.EncodeToString(roothash[:]), hex.EncodeToString(root.Hash[:]))
