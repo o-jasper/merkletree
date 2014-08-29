@@ -45,7 +45,7 @@ func (n* TrieNode) Set(str []byte, to interface{}) {
   node.Actual = node.Actual.SetRaw(str, i, to)
 }
 
-// ----
+// ---- Plain 16-way split with data.
 
 type TrieNode16 struct {
 	Sub  [16]TrieNode
@@ -96,6 +96,28 @@ func (n* TrieNode16) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterfa
 		cur = m
 		i += 1
 	}
-	cur.Sub[nibble(str,i)].Actual = NewTrieNode16(to)
+	cur.Sub[nibble(str,i)].Actual = &TrieNodeData{Data:to} //NewTrieNode16(to)
 	return n
+}
+
+// --- Just the data.
+type TrieNodeData struct {
+	Data interface{}
+}
+
+func (n *TrieNodeData) Downward(str []byte, i int64) (*TrieNode, int64) {
+	return nil, i
+}
+
+func (n *TrieNodeData) Get(str []byte, i int64) interface{} {
+	if i != 2*int64(len(str)) { panic("Endpoint only") }
+	return n.Data
+}
+
+func (n* TrieNodeData) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterface {
+	if i == 2*int64(len(str)) {
+		n.Data = to
+		return n
+	}
+	return NewTrieNode16(n.Data).SetRaw(str, i, to)
 }
