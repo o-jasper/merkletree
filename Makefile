@@ -7,13 +7,16 @@ clean:
 test: test_merkle test_signed test_pubkey
 
 test_merkle:
-		GOPATH=`pwd` go run src/test_merkletree.go
+	GOPATH=`pwd` go run src/test_merkletree.go
 
 test_signed:
-		GOPATH=`pwd` go run src/test_signed_merkletree.go
+	GOPATH=`pwd` go run src/test_signed_merkletree.go
 
 test_pubkey:
-		GOPATH=`pwd` go run src/test_pubkey.go
+	GOPATH=`pwd` go run src/test_pubkey.go
+
+test_trie:
+	GOPATH=`pwd` go run src/test_trie_easy.go
 
 data:
 	GOPATH=`pwd` go run src/path_chunk_n_root.go

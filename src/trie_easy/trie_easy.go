@@ -7,187 +7,95 @@ func nibble(arr []byte, i int64) byte {
 	return arr[i/2] / 16
 }
 
-// -- The interface.
-type TrieNode interface {
-	GetStep([]byte, int64) (TrieNode, int64)
-	Here() interface{}
-	SetHere([]byte, int64, interface{}) //TODO Alter SetHere to do last mile
+type TrieNodeInterface interface {
+	Downward([]byte, int64) (*TrieNode, int64)  // Gets new trienodes insofar possible.
+	Get([]byte, int64) interface{}
+	SetRaw([]byte, int64, interface{}) TrieNodeInterface
 }
 
-type Trie struct { Actual TrieNode }
+// ----
 
-func (trie *Trie).GetRaw(str []byte, i int64) (TrieNode, int64) {
-	n = trie.Actual
-	for 2*i < int64(len(str)) {
-		n2, i2 := n.GetStep(str, i)
-		if n2 == nil {  // Refusing to get more.
-			return n, i
-		} 
-		n = n2
-		i = i2
+type TrieNode struct {
+	Actual TrieNodeInterface
+}
+
+func NewTrieNode() TrieNode {
+	return TrieNode{Actual : nil}
+}
+
+func (n *TrieNode) Downward(str []byte, i int64) (*TrieNode, int64) {
+	if n.Actual == nil { return n, i }
+	if i == 2*int64(len(str)) {	return n, i }
+	m, j := n.Actual.Downward(str, i)
+	if i == j || m ==nil {	return n, i }  // Keep the last indirection.
+	return m, j
+}
+
+func (n* TrieNode) Get(str []byte, i int64) interface{} {
+	at, j := n.Downward(str, i)
+	if at.Actual == nil {
+		return nil
 	}
-	return n, i
+	return at.Actual.Get(str, j)
 }
 
-func (trie *Trie) SetRaw(str []byte, i int64, to interface{}) {
-	n = trie.Actual
-	n2, j := n.GetRaw(str, i)
-	n2.SetHere(str, j, to)
-/*
-	if j == 2*int64(len(str)) {
-		n2.SetHere(str, j, to)
-	} else if j % 2 == 0 {
-		n2.actual = &TrieStretch{Str : str[j/2:], End : &TrieData{Data : to}}
-	} else { // Need to fit in a nibble first.
-		node := NewTrieNode16()
-		n2.actual := node
-		node.Sub[nibble(str, j)] = &TrieStretch{Str : str[(j+1)/2:], End : &TrieData{Data : to}}
-	}*/
+func (n* TrieNode) Set(str []byte, to interface{}) {
+	node, i := n.Downward(str, 0)
+	if node.Actual == nil { node.Actual = NewTrieNode16(nil) }
+  node.Actual = node.Actual.SetRaw(str, i, to)
 }
 
-func (n *Trie) Set(str []byte, to interface{}) { n.SetRaw(str, int64(0), to) }
+// ----
 
-// -- Basic node, no data..
 type TrieNode16 struct {
 	Sub  [16]TrieNode
-}
-
-func NewTrieNode16() TrieNode16 {
-	t := TrieNode16{}
-	for i := 0 ; i < 16 ; i++ {
-		t.Sub[i] = nil
-	}
-	return t
-}
-
-func (n *TrieNode16) GetStep(str []byte, i int64) (TrieNode, int64) {
-	return n.Sub[nibble(str, i)], i + 1
-}
-
-func (n *TrieNode16) Here() interface{} { 
-	return nil
-}
-
-func (n *TrieNode16) SetHere(str []byte, i int64, to interface{}) { 
-	if len(str) != i { panic() }
-	*n = TriePair{TrieData{Data : to}, *n}.(*TrieNode)
-}
-
-// -- Node with just data.
-type TrieData struct {
-	TrieEnd
 	Data interface{}
 }
 
-func (n *TrieData) Here() interface{} {
+func NewTrieNode16(data interface{}) *TrieNode16 {
+	t := TrieNode16{Data:data}
+	for i := 0 ; i < 16 ; i++ {
+		t.Sub[i].Actual = nil
+	}
+	return &t
+}
+
+func (n *TrieNode16) Downward(str []byte, i int64) (*TrieNode, int64) {
+	if i == 2*int64(len(str)) { panic("TrieNode16 `Downward` only for if actually need to.") }
+	cur := &n.Sub[nibble(str, i)]
+	i += 1
+	for i < int64(2*len(str)) {
+		if got, ok := cur.Actual.(*TrieNode16) ; ok {
+			cur = &got.Sub[nibble(str, i)]
+		} else {
+			return cur.Downward(str, i)
+		}
+		i += 1
+	}
+	return cur, i
+}
+
+func (n *TrieNode16) Get(str []byte, i int64) interface{} {
+	if i != 2*int64(len(str)) { panic("Endpoint only") }
 	return n.Data
 }
 
-func (n *TrieData) SetHere(str []byte, i int64, to interface{}) TrieNode {
-	if len(str) != i { panic() }
-	n.Data = to
-	return n
-}
-
-// -- Node with both data and step.
-type TriePair struct {
-	TrieData
-	TrieNode16
-}
-
-func (n *TriePair) GetStep(str []byte, i int64) (TrieNode, int64) {
-	return TrieNode16.GetStep(str, i)
-}
-
-func (n *TriePair) Here() interface{} {
-	return TrieData.Here()
-}
-
-func (n *TriePair) SetHere(to interface{}) TrieNode {
-	TrieData.SetHere(to)
-	return n
-}
-/*
-// -- Stretch with no branches or values is represented as array.
-type TrieStretch struct {
-	Str  []byte
-	End  TrieNode
-}
-
-func different_nibble(i int64, a, b []byte, ) int64 {
-	k := int64(0)
-	for k < 2*len(b) || i < 2*len(a) || nibble(n.Str, j) != nibble(str, j) {
+func (n* TrieNode16) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterface {
+	if i == 2*int64(len(str)) {
+		n.Data = to
+		return n
+	}
+	if n.Sub[nibble(str,i)].Actual != nil {
+		panic("Not far downward enough!?!")
+	}
+	//Make more trie nodes(TODO special structure for sparse stuff.)
+	cur := n
+	for i < 2*int64(len(str)) - 1 {
+		m := NewTrieNode16(nil)
+		cur.Sub[nibble(str,i)].Actual = m
+		cur = m
 		i += 1
-		k += 1
 	}
-	return k
-}
-
-func (n *TrieStretch) GetStep(str []byte, i int64) (TrieNode, int64) {
-	k := different_nibble(i, str, b.Str)
-	if k == len(b.Str) { // Passed the whole thing.
-		return n.End, i + k
-	}
-	return &TrieStretchVal{Ref : n, K : k}, i  //Location inside it.
-}
-
-func (n *TrieStretch) Here() interface{} {
-	return n.End
-}
-
-func (n *TrieStretch) SetHere(to interface{}) TrieNode {
-	n.End = to
+	cur.Sub[nibble(str,i)].Actual = NewTrieNode16(to)
 	return n
 }
-
-// -- Values inside the TrieStretch. Not intended as actual nodes, just something
-//    preduced by TrieStretch.
-type TrieStretchVal struct {
-	Ref *TrieStretch
-	K  int64
-}
-
-func (n TrieStretchVal) GetStep(str []byte, i int64) (TrieNode, int64) {
-	return &TrieEnd{}, i
-}
-func (n TrieStretchVal) Here() interface{} {
-	return nil
-}
-func (n TrieStretchVal) SetHere(to interface{}) {
-	// Has to  split the TrieStretch in two.
-	before, after := n.Ref.Str[:n.K/2], n.Ref.Str[n.K/2 + 1:]
-	
-	var first,second interface{} // A TrieNode16 and TriePair with data in latter.
-	if n.K % 2 == 0 { //First the data.
-		first  = TriePair{TrieData{Data : to}, NewTrieNode16()}
-		second = NewTrieNode16()
-
-		first.Sub[nibble(n.Ref.Str, n.K)] = second
-	} else { //First non-data/
-		first  = NewTrieNode16()
-		second = TriePair{TrieData{Data : to}, NewTrieNode16()}
-
-		first.Sub[nibble(n.Ref.Str, n.K - 1)] = second
-	}
-	
-	var start interface{} // Prepended TrieStretch, if needed.
-	if n.K/2 == 0 {
-		start = first
-	} else {
-		start = TrieStretch{Str : n.Ref.Str[:n.K/2], End : first}
-	}
-
-	// Appended TrieStretch, if needed.
-	if n.K != 2*len(n.Ref.Str) {
-		set_to := TrieStretch{Str : n.Ref.Str[n.K/2 + 1:], End : first}
-		second.Sub[nibble(n.Ref.Str, n.K + n.K%2)] = set_to
-	}
-	//Set it.
-	*n.Ref = start
-}
-
-// -- Note: room for more versions:
-// * Use background DB?
-// * one that uses continuous chunks in memory instead of pointers.
-//   (speed and memory improvement)
-*/
