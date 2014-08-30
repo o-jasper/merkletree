@@ -39,11 +39,13 @@ func (n* TrieNode) Get(str []byte, i int64) interface{} {
 	return at.Actual.Get(str, j)
 }
 
-func (n* TrieNode) Set(str []byte, to interface{}) {
-	node, i := n.Downward(str, 0)
+func (n* TrieNode) SetI(str []byte, j int64, to interface{}) {
+	node, i := n.Downward(str, j)
 	if node.Actual == nil { node.Actual = NewTrieNode16(nil) }
   node.Actual = node.Actual.SetRaw(str, i, to)
 }
+
+func (n* TrieNode) Set(str []byte, to interface{}) { n.SetI(str, 0, to) }
 
 // ---- Plain 16-way split with data.
 
@@ -88,7 +90,7 @@ func (n* TrieNode16) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterfa
 	if n.Sub[nibble(str,i)].Actual != nil {
 		panic("Not far downward enough!?!")
 	}
-	//Make more trie nodes(TODO special structure for sparse stuff.)
+	//Make more trie nodes(TODO use TrieStretch)
 	cur := n
 	for i < 2*int64(len(str)) - 1 {
 		m := NewTrieNode16(nil)
@@ -120,4 +122,68 @@ func (n* TrieNodeData) SetRaw(str []byte, i int64, to interface{}) TrieNodeInter
 		return n
 	}
 	return NewTrieNode16(n.Data).SetRaw(str, i, to)
+}
+
+// --- Stretch with just one branch.
+
+type TrieStretch struct {
+	Stretch  []byte
+	End      TrieNode
+}
+
+func (n *TrieStretch) Downward(str []byte, i int64) (*TrieNode, int64) {
+	if i < 2*int64(len(str) - len(n.Stretch)) { // Range inside the stretch.
+		return nil, i
+	}
+	for j := int64(0) ; j < int64(len(n.Stretch)) ; j++ {
+		if str[i/2 + j] != n.Stretch[j] {  // Breaks out of the stretch.
+			return nil, i  // Back to begining.
+		}
+	}
+	return n.End.Downward(str, i + 2*int64(len(n.Stretch)))
+}
+
+func (n *TrieStretch) Get(str []byte, i int64) interface{} {
+	if i < 2*int64(len(str) - len(n.Stretch)) { // Range inside the stretch.(nothing in there)
+		return nil
+	}
+	return n.End.Get(str, i + 2*int64(len(n.Stretch)))
+}
+
+func (n* TrieStretch) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterface {
+	if i >= 2*int64(len(str) - len(n.Stretch)) { panic("Didnt go downward properly") }
+	if i%2 != 0 { panic("Stretches must start at uneven.") }
+	// The hard part.
+	for j := int64(0) ; j < int64(len(str)) ; j++ {
+		if str[i/2 + j] != n.Stretch[j] || i == 2*int64(len(str)) {  // Breaks out of the stretch.
+			a1, a2 := str[i/2 + j]%16, str[i/2 + j]/16
+			g1, g2 := n.Stretch[j]%16, n.Stretch[j]/16
+
+			// Two nodes(stretches start even)
+			first, second := NewTrieNode16(nil), NewTrieNode16(nil)
+			// Connect them.
+			first.Sub[g1] = TrieNode{ Actual : second }
+			// Connect to what is after.
+			if j < int64(len(str)) {
+				stretch := &TrieStretch{ Stretch : n.Stretch[j+1:], End : n.End }
+				second.Sub[g2] = TrieNode{ Actual : stretch }
+			}
+
+			if a1 != g1 { // Breaks out of first one.
+				first.Sub[a1].SetI(str, i + 2*j, to)
+			} else if a2 != g2 { // Breaks out of first one.
+				second.Sub[a2].SetI(str, i + 2*j + 1, to)
+			} else if i == 2*int64(len(str)) { // In-line.
+				first.Data = to
+			}
+			
+			if j == 0 {
+				return first
+			} else {  // Prepend what was before.
+				return &TrieStretch{Stretch : n.Stretch[:j], End : TrieNode{ Actual : first}}
+			}
+		}
+	}
+	panic("BUG Didnt go downward properly.(2)")
+	return nil
 }
