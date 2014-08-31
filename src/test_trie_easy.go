@@ -29,7 +29,7 @@ func main() {
 
 	seed := int64(243525623)
 	r := rand.New(rand.NewSource(seed))
-	node := trie_easy.NewTrieNode()
+	node := trie_easy.NewTrieNode(nil)
 	compare := map[string][]byte{}
 	
 	n_min, n_max := int32(3), int32(8)
