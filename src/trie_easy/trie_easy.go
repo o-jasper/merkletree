@@ -112,7 +112,7 @@ func (n* TrieNode16) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterfa
 		}
 	}
 	end := NewTrieNode(&TrieNodeData{Data:to})
-	m.Sub[str[i/2]%16] = NewTrieNode(&TrieStretch{Stretch : str[i/2 + 1:], End : end})
+	m.Sub[str[i/2]/16] = NewTrieNode(&TrieStretch{Stretch : str[i/2 + 1:], End : end})
 	return n
 }
 
