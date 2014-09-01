@@ -9,29 +9,11 @@ import (
 	"encoding/hex"
 )
 
-func prt16(n *trie_easy.TrieNode16) {
-	fmt.Print("(")
-	for i, el := range n.Sub {
-		if data, ok := el.Actual.(*trie_easy.TrieNode16) ; ok && data.Data!=nil {
-			fmt.Print(i, ",") 
-		}
-		prt(&el)
-	}
-	fmt.Print(")")
-}
-
-func prt(node* trie_easy.TrieNode) {
-	c, okc := node.Actual.(*trie_easy.TrieNode16)
-	if okc { 
-		prt16(c) 
-	}
-}
-
 func main() {
 
 	seed := int64(243525623)
 	r := rand.New(rand.NewSource(seed))
-	node := trie_easy.NewTrieNode(nil)
+	node := trie_easy.NewTrie(nil)
 	compare := map[string]int{}
 	
 	n_min, n_max := int32(3), int32(8)
