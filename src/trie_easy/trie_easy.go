@@ -1,5 +1,7 @@
 package trie_easy
 
+import "fmt"
+
 func nibble(arr []byte, i int64) byte {
 	if i % 2 == 0 {
 		return arr[i/2] % 16
@@ -7,10 +9,14 @@ func nibble(arr []byte, i int64) byte {
 	return arr[i/2] / 16
 }
 
+type MapFun func(interface{}, []byte, interface{}) bool
+
 type TrieNodeInterface interface {
 	Downward([]byte, int64) (*TrieNode, int64)  // Gets new trienodes insofar possible.
 	Get([]byte, int64) interface{}
 	SetRaw([]byte, int64, interface{}) TrieNodeInterface
+
+	MapAll(interface{}, []byte, bool, MapFun) bool
 
 	//TODO merkle-tree-like stuff.
 }
@@ -38,9 +44,7 @@ func (n *TrieNode) Downward(str []byte, i int64) (*TrieNode, int64) {
 
 func (n* TrieNode) Get(str []byte, i int64) interface{} {
 	at, j := n.Downward(str, i)
-	if at.Actual == nil {
-		return nil
-	}
+	if at.Actual == nil {	return nil }
 	return at.Actual.Get(str, j)
 }
 
@@ -51,6 +55,11 @@ func (n* TrieNode) SetI(str []byte, j int64, to interface{}) {
 }
 
 func (n* TrieNode) Set(str []byte, to interface{}) { n.SetI(str, 0, to) }
+
+func (n* TrieNode) MapAll(data interface{}, fun MapFun) bool {
+	if n.Actual == nil { return false }
+	return n.Actual.MapAll(data, []byte{}, false, fun)
+}
 
 // ---- Plain 16-way split with data.
 
@@ -83,7 +92,8 @@ func (n *TrieNode16) Downward(str []byte, i int64) (*TrieNode, int64) {
 }
 
 func (n *TrieNode16) Get(str []byte, i int64) interface{} {
-	if i != 2*int64(len(str)) { panic("Endpoint only") }
+	if i < 2*int64(len(str)) { return nil }
+	if i > 2*int64(len(str)) { panic("i>len") }
 	return n.Data
 }
 
@@ -98,14 +108,29 @@ func (n* TrieNode16) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterfa
 	//Make more trie nodes(TODO use TrieStretch)
 	
 	final := &TrieNodeData{Data:to} //NewTrieNode16(to)
-	n.Sub[nibble(str,i)].Actual = TrieCreator16{}.Extend(str, i+1, final)
+	n.Sub[nibble(str,i)].Actual = Creator16{}.Extend(str, i+1, final)
 	return n
 }
 
-// -- Creates it that way.
-type TrieCreator16 struct {}
+func (n* TrieNode16) MapAll(data interface{}, pre []byte, odd bool, fun MapFun) bool {
+	if n.Data != nil && fun(data, pre, n.Data) { return true }
+	for i, sub := range n.Sub {
+		if sub.Actual == nil { continue }
+		var npre []byte
+		if odd {
+			npre = append(pre[:len(pre)-1], pre[len(pre)-1] + byte(i)*16)
+		} else {
+			npre = append(pre, byte(i))
+		}
+		if sub.Actual.MapAll(data, npre, !odd, fun){ return true }
+	}
+	return false
+}
 
-func (_ TrieCreator16) Extend(str []byte, i int64, final TrieNodeInterface) TrieNodeInterface {
+// -- Creates it that way.
+type Creator16 struct {}
+
+func (_ Creator16) Extend(str []byte, i int64, final TrieNodeInterface) TrieNodeInterface {
 	first := NewTrieNode16(nil)
 	m := first
 	for i < 2*int64(len(str)) - 1 {
@@ -128,7 +153,11 @@ func (n *TrieNodeData) Downward(str []byte, i int64) (*TrieNode, int64) {
 }
 
 func (n *TrieNodeData) Get(str []byte, i int64) interface{} {
-	if i != 2*int64(len(str)) { panic("Endpoint only") }
+	if i < 2*int64(len(str)) { return nil }
+	if i > 2*int64(len(str)) { 
+		fmt.Println("E", i, len(str))
+		panic("i>2*len") 
+	}
 	return n.Data
 }
 
@@ -138,4 +167,8 @@ func (n* TrieNodeData) SetRaw(str []byte, i int64, to interface{}) TrieNodeInter
 		return n
 	}
 	return NewTrieNode16(n.Data).SetRaw(str, i, to)
+}
+
+func (n* TrieNodeData) MapAll(data interface{}, pre []byte, odd bool, fun MapFun) bool {
+	return fun(data, pre, n.Data)	
 }

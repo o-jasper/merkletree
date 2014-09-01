@@ -10,7 +10,7 @@ type TrieStretch struct {
 }
 
 func (n *TrieStretch) Downward(str []byte, i int64) (*TrieNode, int64) {
-	if i < 2*int64(len(str) - len(n.Stretch)) { // Range inside the stretch.
+	if i + 2*int64(len(n.Stretch)) < 2*int64(len(str)) { // Range inside the stretch.
 		return nil, i
 	}
 	for j := int64(0) ; j < int64(len(n.Stretch)) ; j++ {
@@ -23,10 +23,11 @@ func (n *TrieStretch) Downward(str []byte, i int64) (*TrieNode, int64) {
 }
 
 func (n *TrieStretch) Get(str []byte, i int64) interface{} {
-	if i < 2*int64(len(str) - len(n.Stretch)) { // Range inside the stretch.(nothing in there)
-		return nil
-	}
-	return n.End.Get(str, i + 2*int64(len(n.Stretch)))
+	// Range inside the stretch.(nothing in there)
+	if i + 2*int64(len(n.Stretch)) > 2*int64(len(str)) { return nil }
+	if i < 2*int64(len(str)) { panic("String to short?!") }
+	panic("Should be in next node")
+	//return n.End.Get(str, i + 2*int64(len(n.Stretch)))
 }
 
 func (n* TrieStretch) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterface {
@@ -44,16 +45,17 @@ func (n* TrieStretch) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterf
 			// Connect them.
 			first.Sub[g1] = NewTrieNode(second)
 			// Connect to what is after.
-			if j < 2*int64(len(str)) { // It is a bit of stretch.
-				fmt.Println("-", n.Stretch[j+1:], g1+16*g2)
+			if j < int64(len(n.Stretch) - 1) { // If is before the last, need stretch to end.
+				fmt.Println("a-", n.Stretch[j+1:], g1+16*g2)
 				after_stretch := &TrieStretch{ Stretch : n.Stretch[j+1:], End : n.End }
 				second.Sub[g2] = NewTrieNode(after_stretch)
-			} else{  // It is the current end.
+			} else{  // It is the last one, can go straight there.
 				second.Sub[g2] = n.End
 			}
 
 			if a1 != g1 { // Breaks out of first one.
-				first.Sub[a1].SetI(str, i + 2*j, to)
+				fmt.Println("A", str[i/2 + j - 1:], i, j)
+				first.Sub[a1].SetI(str, i + 2*j - 2, to)
 			} else if a2 != g2 { // Breaks out of first one.
 				if a1 != g1 { panic("BUG") }  // (could be both, first goes)
 				second.Sub[a2].SetI(str, i + 2*j + 1, to)
@@ -62,7 +64,7 @@ func (n* TrieStretch) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterf
 			if j == 0 {
 				return first
 			} else {  // Prepend what was before.
-				fmt.Println("-", n.Stretch[:j])
+				fmt.Println("b-", n.Stretch[:j])
 				return &TrieStretch{Stretch : n.Stretch[:j], End : NewTrieNode(first)}
 			}
 			panic("Unreachable")
@@ -72,22 +74,25 @@ func (n* TrieStretch) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterf
 	return nil
 }
 
+func (n* TrieStretch) MapAll(data interface{}, pre []byte, odd bool, fun MapFun) bool {
+	if odd { panic("Stretches must be on even.") }
+	pre = append(pre, n.Stretch...)
+	return n.End.Actual.MapAll(data, pre, false, fun)
+}
+
 type CreatorStretch struct{}
 
 func (_ CreatorStretch) Extend(str []byte, i int64, final TrieNodeInterface) TrieNodeInterface {
 	if i/2 + 1 == int64(len(str)) {
-		if i%2 == 0 {
-			first := NewTrieNode16(nil)
-			first.Sub[str[i/2]%16].Actual = final
-			return first
-		} else {
-			return final
-		}
+		if i%2 != 0 { panic("if i == 2*len(str), shouldnt be here") }
+		first := NewTrieNode16(nil)
+		first.Sub[str[i/2]%16].Actual = final
+		return first
 	}
-	first := &TrieStretch{Stretch : str[i/2 + 1:], End : NewTrieNode(final)}
-	if i%2 == 0 { // This one is even, so the next one isnt!
+	first := &TrieStretch{Stretch : str[i/2:], End : NewTrieNode(final)}
+	if i%2 != 0 { // Not even, need one in the middle.
 		m := NewTrieNode16(nil)
-		m.Sub[str[i/2]%16].Actual = first
+		m.Sub[str[i/2]/16].Actual = first
 		return m  // This one as first, instead of other one.
 	}
 	return first
