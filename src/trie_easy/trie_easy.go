@@ -23,13 +23,13 @@ type TrieNodeInterface interface {
 
 // Allows implementation of different ways to extend it.
 type TrieCreator interface {
-	Extend([]byte, int64, TrieNodeInterface) TrieNodeInterface
+	Extend([]byte, int64, TrieNodeInterface) interface{}
 }
 
 // ----
 
 type TrieNode struct {
-	Actual TrieNodeInterface
+	Actual interface{}  // Its an interface for ability to expand.
 }
 
 func NewTrieNode(actual TrieNodeInterface) TrieNode { return TrieNode{Actual:actual} }
@@ -37,7 +37,7 @@ func NewTrieNode(actual TrieNodeInterface) TrieNode { return TrieNode{Actual:act
 func (n *TrieNode) Downward(str []byte, i int64) (*TrieNode, int64) {
 	if n.Actual == nil { return n, i }
 	if i == 2*int64(len(str)) {	return n, i }
-	m, j := n.Actual.Downward(str, i)
+	m, j := n.Actual.(TrieNodeInterface).Downward(str, i)
 	if i == j || m ==nil {	return n, i }  // Keep the last indirection.
 	return m, j
 }
@@ -45,20 +45,20 @@ func (n *TrieNode) Downward(str []byte, i int64) (*TrieNode, int64) {
 func (n* TrieNode) Get(str []byte, i int64) interface{} {
 	at, j := n.Downward(str, i)
 	if at.Actual == nil {	return nil }
-	return at.Actual.Get(str, j)
+	return at.Actual.(TrieNodeInterface).Get(str, j)
 }
 
 func (n* TrieNode) SetI(str []byte, j int64, to interface{}) {
 	node, i := n.Downward(str, j)
 	if node.Actual == nil { node.Actual = NewTrieNode16(nil) }
-  node.Actual = node.Actual.SetRaw(str, i, to)
+  node.Actual = node.Actual.(TrieNodeInterface).SetRaw(str, i, to)
 }
 
 func (n* TrieNode) Set(str []byte, to interface{}) { n.SetI(str, 0, to) }
 
 func (n* TrieNode) MapAll(data interface{}, fun MapFun) bool {
 	if n.Actual == nil { return false }
-	return n.Actual.MapAll(data, []byte{}, false, fun)
+	return n.Actual.(TrieNodeInterface).MapAll(data, []byte{}, false, fun)
 }
 
 // ---- Plain 16-way split with data.
@@ -122,7 +122,7 @@ func (n* TrieNode16) MapAll(data interface{}, pre []byte, odd bool, fun MapFun) 
 		} else {
 			npre = append(pre, byte(i))
 		}
-		if sub.Actual.MapAll(data, npre, !odd, fun){ return true }
+		if sub.Actual.(TrieNodeInterface).MapAll(data, npre, !odd, fun){ return true }
 	}
 	return false
 }
@@ -130,7 +130,7 @@ func (n* TrieNode16) MapAll(data interface{}, pre []byte, odd bool, fun MapFun) 
 // -- Creates it that way.
 type Creator16 struct {}
 
-func (_ Creator16) Extend(str []byte, i int64, final TrieNodeInterface) TrieNodeInterface {
+func (_ Creator16) Extend(str []byte, i int64, final TrieNodeInterface) interface{} {
 	first := NewTrieNode16(nil)
 	m := first
 	for i < 2*int64(len(str)) - 1 {

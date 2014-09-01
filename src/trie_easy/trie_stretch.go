@@ -33,7 +33,7 @@ func (n *TrieStretch) Get(str []byte, i int64) interface{} {
 func (n* TrieStretch) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterface {
 	if i%2 != 0 { panic("TrieStretches should start at whole bytes.") }
 	// The hard part.
-	for j := int64(0) ; i/2 + j < int64(len(str)) ; j++ {
+	for j := int64(0) ; j < int64(len(n.Stretch)) && i/2 + j < int64(len(str)) ; j++ {
 		if str[i/2 + j] != n.Stretch[j] {  // Breaks out of the stretch.
 			a1, a2 := str[i/2 + j]%16, str[i/2 + j]/16  //Added nibbles.
 			g1, g2 := n.Stretch[j]%16, n.Stretch[j]/16  //Already existing nibble route.
@@ -55,7 +55,7 @@ func (n* TrieStretch) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterf
 
 			if a1 != g1 { // Breaks out of first one.
 				fmt.Println("A", str[i/2 + j - 1:], i, j)
-				first.Sub[a1].SetI(str, i + 2*j - 2, to)
+				first.Sub[a1].SetI(str, i + 2*j, to)
 			} else if a2 != g2 { // Breaks out of first one.
 				if a1 != g1 { panic("BUG") }  // (could be both, first goes)
 				second.Sub[a2].SetI(str, i + 2*j + 1, to)
@@ -75,14 +75,13 @@ func (n* TrieStretch) SetRaw(str []byte, i int64, to interface{}) TrieNodeInterf
 }
 
 func (n* TrieStretch) MapAll(data interface{}, pre []byte, odd bool, fun MapFun) bool {
-	if odd { panic("Stretches must be on even.") }
-	pre = append(pre, n.Stretch...)
-	return n.End.Actual.MapAll(data, pre, false, fun)
+//	if odd { panic("Stretches must be on even.") }
+	return n.End.Actual.(TrieNodeInterface).MapAll(data, append(pre, n.Stretch...), false, fun)
 }
 
 type CreatorStretch struct{}
 
-func (_ CreatorStretch) Extend(str []byte, i int64, final TrieNodeInterface) TrieNodeInterface {
+func (_ CreatorStretch) Extend(str []byte, i int64, final TrieNodeInterface) interface{} {
 	if i/2 + 1 == int64(len(str)) {
 		if i%2 != 0 { panic("if i == 2*len(str), shouldnt be here") }
 		first := NewTrieNode16(nil)

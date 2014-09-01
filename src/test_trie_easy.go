@@ -53,7 +53,7 @@ func main() {
 	for k,v := range compare {
 		val := node.Get([]byte(k), 0)
 		if val != v {
-			fmt.Println("Mismatch on:", k,":", v, "vs", val)
+			fmt.Println("Mismatch on:", hex.EncodeToString([]byte(k)),":", v, "vs", val)
 		}
 	}
 }
