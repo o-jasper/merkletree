@@ -7,11 +7,13 @@ import (
 
 	"merkletree/test_common"
 	"encoding/hex"
+
+	"time"
 )
 
 func main() {
 
-	seed := int64(243525623)
+	seed := time.Now().UnixNano()
 	r := rand.New(rand.NewSource(seed))
 	node := trie_easy.NewTrie(nil)
 	compare := map[string]int{}
@@ -30,7 +32,6 @@ func main() {
 		fmt.Println(v, hex.EncodeToString(k))
 		return false
 	})
-//	prt(&node)
 	fmt.Println("= And check equality.")
 	for k,v := range compare {
 		val := node.Get([]byte(k), 0)
@@ -38,4 +39,5 @@ func main() {
 			fmt.Println("Mismatch on:", hex.EncodeToString([]byte(k)),":", v, "vs", val)
 		}
 	}
+	//fmt.Print("= And lack of presence") //TODO
 }

@@ -13,19 +13,8 @@ func NewNode16(data interface{}) *Node16 {
 	return &t
 }
 
-func (n *Node16) Downward(str []byte, i int64) (*Trie, int64) {
-	if i == 2*int64(len(str)) { panic("Node16 `Downward` only for if actually need to.") }
-	cur := &n.Sub[nibble(str, i)]
-	i += 1
-	for i < int64(2*len(str)) {
-		if got, ok := cur.Actual.(*Node16) ; ok {
-			cur = &got.Sub[nibble(str, i)]
-		} else {
-			return cur.Downward(str, i)
-		}
-		i += 1
-	}
-	return cur, i
+func (n *Node16) Down1(str []byte, i int64, _ bool) *Trie {
+	return &n.Sub[nibble(str, i)]
 }
 
 func (n *Node16) Get(str []byte, i int64) interface{} {
@@ -43,7 +32,7 @@ func (n* Node16) SetRaw(str []byte, i int64, to interface{}) TrieInterface {
 		panic("Not far downward enough!?!")
 	}
 	//Make more trie nodes(TODO use TrieStretch)
-	
+
 	final := &DataNode{Data:to} //NewNode16(to)
 	n.Sub[nibble(str,i)].Actual = Creator16{}.Extend(str, i+1, final)
 	return n
@@ -85,8 +74,8 @@ type DataNode struct {
 	Data interface{}
 }
 
-func (n *DataNode) Downward(str []byte, i int64) (*Trie, int64) {
-	return nil, i
+func (n *DataNode) Down1(_ []byte, _ int64, _ bool) *Trie {
+	return nil
 }
 
 func (n *DataNode) Get(str []byte, i int64) interface{} {

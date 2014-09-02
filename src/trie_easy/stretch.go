@@ -9,17 +9,17 @@ type TrieStretch struct {
 	End      Trie
 }
 
-func (n *TrieStretch) Downward(str []byte, i int64) (*Trie, int64) {
+
+func (n *TrieStretch) Down1(str []byte, i int64, _ bool) *Trie {
 	if i + 2*int64(len(n.Stretch)) < 2*int64(len(str)) { // Range inside the stretch.
-		return nil, i
+		return nil
 	}
 	for j := int64(0) ; j < int64(len(n.Stretch)) ; j++ {
 		if str[i/2 + j] != n.Stretch[j] {  // Breaks out of the stretch.
-			return nil, i  // Back to begining.
+			return nil  // Back to begining.
 		}
 	}
-	// Continue at end.
-	return n.End.Downward(str, i + 2*int64(len(n.Stretch)))
+	return &n.End
 }
 
 func (n *TrieStretch) Get(str []byte, i int64) interface{} {
