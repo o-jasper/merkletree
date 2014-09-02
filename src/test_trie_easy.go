@@ -24,7 +24,7 @@ func main() {
 	for i := 0 ; i < 10 ; i++ {
 		k := test_common.Rand_chunk(r, n_min, n_max)
 		fmt.Println(i, hex.EncodeToString(k))
-		node.Set(k, i)
+		node.Set(k, i, trie_easy.Creator16{})
 		compare[string(k)] = i
 	}
 	fmt.Println("= Printing")

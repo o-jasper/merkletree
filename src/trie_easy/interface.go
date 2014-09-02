@@ -8,7 +8,7 @@ type TrieInterface interface {
 	Down1([]byte, int64, bool) *Trie
 	
 	Get([]byte, int64) interface{}
-	SetRaw([]byte, int64, interface{}) TrieInterface
+	SetRaw([]byte, int64, interface{}, TrieCreator) TrieInterface
 
 	MapAll(interface{}, []byte, bool, MapFun) bool
 
@@ -46,13 +46,15 @@ func (n* Trie) Get(str []byte, i int64) interface{} {
 	return at.Actual.(TrieInterface).Get(str, j)
 }
 
-func (n* Trie) SetI(str []byte, j int64, to interface{}) {
+func (n* Trie) SetI(str []byte, j int64, to interface{}, c TrieCreator) {
 	node, i := n.Downward(str, j, true)
 	if node.Actual == nil { node.Actual = NewNode16(nil) }
-  node.Actual = node.Actual.(TrieInterface).SetRaw(str, i, to)
+  node.Actual = node.Actual.(TrieInterface).SetRaw(str, i, to, c)
 }
 
-func (n* Trie) Set(str []byte, to interface{}) { n.SetI(str, 0, to) }
+func (n* Trie) Set(str []byte, to interface{}, c TrieCreator) { 
+	n.SetI(str, 0, to, c)
+}
 
 func (n* Trie) MapAll(data interface{}, fun MapFun) bool {
 	if n.Actual == nil { return false }

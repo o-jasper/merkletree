@@ -23,7 +23,7 @@ func (n *Node16) Get(str []byte, i int64) interface{} {
 	return n.Data
 }
 
-func (n* Node16) SetRaw(str []byte, i int64, to interface{}) TrieInterface {
+func (n* Node16) SetRaw(str []byte, i int64, to interface{}, c TrieCreator) TrieInterface {
 	if i == 2*int64(len(str)) {
 		n.Data = to
 		return n
@@ -34,7 +34,7 @@ func (n* Node16) SetRaw(str []byte, i int64, to interface{}) TrieInterface {
 	//Make more trie nodes(TODO use TrieStretch)
 
 	final := &DataNode{Data:to} //NewNode16(to)
-	n.Sub[nibble(str,i)].Actual = Creator16{}.Extend(str, i+1, final)
+	n.Sub[nibble(str,i)].Actual = c.Extend(str, i+1, final)
 	return n
 }
 
@@ -84,12 +84,12 @@ func (n *DataNode) Get(str []byte, i int64) interface{} {
 	return n.Data
 }
 
-func (n* DataNode) SetRaw(str []byte, i int64, to interface{}) TrieInterface {
+func (n* DataNode) SetRaw(str []byte, i int64, to interface{}, c TrieCreator) TrieInterface {
 	if i == 2*int64(len(str)) {
 		n.Data = to
 		return n
 	}
-	return NewNode16(n.Data).SetRaw(str, i, to)
+	return NewNode16(n.Data).SetRaw(str, i, to, c)
 }
 
 func (n* DataNode) MapAll(data interface{}, pre []byte, odd bool, fun MapFun) bool {

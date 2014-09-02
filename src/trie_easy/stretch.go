@@ -30,7 +30,7 @@ func (n *TrieStretch) Get(str []byte, i int64) interface{} {
 	//return n.End.Get(str, i + 2*int64(len(n.Stretch)))
 }
 
-func (n* TrieStretch) SetRaw(str []byte, i int64, to interface{}) TrieInterface {
+func (n* TrieStretch) SetRaw(str []byte, i int64, to interface{}, c TrieCreator) TrieInterface {
 	if i%2 != 0 { panic("TrieStretches should start at whole bytes.") }
 	// The hard part.
 	for j := int64(0) ; j < int64(len(n.Stretch)) && i/2 + j < int64(len(str)) ; j++ {
@@ -55,10 +55,10 @@ func (n* TrieStretch) SetRaw(str []byte, i int64, to interface{}) TrieInterface 
 
 			if a1 != g1 { // Breaks out of first one.
 				fmt.Println("A", str[i/2 + j - 1:], i, j)
-				first.Sub[a1].SetI(str, i + 2*j, to)
+				first.Sub[a1].SetI(str, i + 2*j, to, c)
 			} else if a2 != g2 { // Breaks out of first one.
 				if a1 != g1 { panic("BUG") }  // (could be both, first goes)
-				second.Sub[a2].SetI(str, i + 2*j + 1, to)
+				second.Sub[a2].SetI(str, i + 2*j + 1, to, c)
 			} else { panic("BUG") }
 			
 			if j == 0 {
