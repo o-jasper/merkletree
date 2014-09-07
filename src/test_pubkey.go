@@ -35,13 +35,18 @@ func main() {
 
 	for i:= int64(0) ; i < times ; i++ {
 		signer, pubkey := signed_merkle_pubkey.GenerateKey()
+		wrong_signer, _ := signed_merkle_pubkey.GenerateKey()
 		
 		data := test_common.Rand_chunk(r, n_min, n_max)
 		sig := signer.Sign(data)
+		wrong_sig := wrong_signer.Sign(data)
 		
 		if !pubkey.VerifySignature(sig, data) {
-			fmt.Print("*")
+			fmt.Print("This one should have been correct.")
 			j+= 1;
+		}
+		if pubkey.VerifySignature(wrong_sig, data) {
+			fmt.Print("This one should have been incorrect.")
 		}
 		// TODO check against false positive.
 	}
