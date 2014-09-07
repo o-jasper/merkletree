@@ -18,14 +18,14 @@ func main() {
 	node := trie_easy.NewTrie(nil)
 	compare := map[string]int{}
 	
-	n_min, n_max := int32(3), int32(8)
+	n_min, n_max, N := int32(3), int32(8), 10
 	
 	fmt.Println("= Put stuff in twice.")
-	for i := 0 ; i < 10 ; i++ {
-		k := test_common.Rand_chunk(r, n_min, n_max)
-		fmt.Println(i, hex.EncodeToString(k))
-		node.Set(k, i, trie_easy.Creator16{})
-		compare[string(k)] = i
+	for i := 0 ; i < N ; i++ {
+		chunk := test_common.Rand_chunk(r, n_min, n_max)
+		fmt.Println(i, hex.EncodeToString(chunk))
+		node.Set(chunk, i, trie_easy.Creator16{})
+		compare[string(chunk)] = i
 	}
 	fmt.Println("= Printing")
 	node.MapAll(nil, func(data interface{}, k []byte, v interface{}) bool{
@@ -37,6 +37,20 @@ func main() {
 		val := node.Get([]byte(k), 0)
 		if val != v {
 			fmt.Println("Mismatch on:", hex.EncodeToString([]byte(k)),":", v, "vs", val)
+		}
+	}
+	fmt.Println("= Try against false positives.")
+	for i := 0 ; i < N ; i++ {
+		key := test_common.Rand_chunk(r, n_min, n_max)
+		v, got := compare[string(key)]
+		val := node.Get([]byte(key), 0)
+		if got { // Accidentally made one that exists.
+			if val != v {
+				fmt.Println("(during rand chunks)Mismatch on:", 
+					hex.EncodeToString([]byte(key)),":", v, "vs", val)
+			}
+		} else if val != nil {
+			fmt.Println("Got something extra:", val)
 		}
 	}
 	//fmt.Print("= And lack of presence") //TODO
