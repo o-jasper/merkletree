@@ -16,9 +16,25 @@ import (
 	"crypto/sha256"
 )
 
-//Add a `N` chunks and lists the tree leaves. `incp` is the probability of
-// interest in a chunk.
-func run_test(seed int64, n_min int32, n_max int32, N int, times int, subtimes int) {
+func main() {
+
+//Get data.
+	var seed int64
+	flag.Int64Var(&seed, "seed", time.Now().UnixNano(), "Random seed for test.")
+	var n_min int64
+	flag.Int64Var(&n_min, "n_min", 1, "Minimum length of random chunk.")
+	var n_max int64
+	flag.Int64Var(&n_max, "n_max", 256, "Maximum length of random chunk.")
+	var N int
+	flag.IntVar(&N, "N", 80, "Number of chunks.")
+	var times int
+	flag.IntVar(&times, "times", 16, "Number of times to challenge.")
+	var subtimes int
+	flag.IntVar(&subtimes, "subtimes", 8, "Number of indices per challenge.")
+	
+	flag.Parse()
+
+// Test Portion.
 	fmt.Println("Denote info if it goes wrong.")
 	fmt.Println("Seed:", seed)
 	r := rand.New(rand.NewSource(seed))
@@ -59,23 +75,4 @@ func run_test(seed int64, n_min int32, n_max int32, N int, times int, subtimes i
 	fmt.Println("---")
 	fmt.Println("No messages above implies success.")
 	fmt.Println("times", times, "subtimes", subtimes, "N", N)
-}
-
-func main() {
-	var seed int64
-	flag.Int64Var(&seed, "seed", time.Now().UnixNano(), "Random seed for test.")
-	var n_min int64
-	flag.Int64Var(&n_min, "n_min", 1, "Minimum length of random chunk.")
-	var n_max int64
-	flag.Int64Var(&n_max, "n_max", 256, "Maximum length of random chunk.")
-	var N int
-	flag.IntVar(&N, "N", 80, "Number of chunks.")
-	var times int
-	flag.IntVar(&times, "times", 16, "Number of times to challenge.")
-	var subtimes int
-	flag.IntVar(&subtimes, "subtimes", 8, "Number of indices per challenge.")
-	
-	flag.Parse()
-
-	run_test(seed, int32(n_min), int32(n_max), N, times, subtimes)
 }

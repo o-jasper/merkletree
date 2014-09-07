@@ -16,7 +16,22 @@ import (
 
 //Add a `N` chunks and lists the tree leaves. `incp` is the probability of
 // interest in a chunk.
-func run_test(seed int64, n_min, n_max, N int32, incp float64) {
+func main() {
+
+//Read settings portion.
+	var seed int64
+	flag.Int64Var(&seed, "seed", time.Now().UnixNano(), "Random seed for test.")
+	var n_min, n_max, N int64
+	flag.Int64Var(&n_min, "n_min", 1, "Minimum length of random chunk.")
+	flag.Int64Var(&n_max, "n_max", 256, "Maximum length of random chunk.")
+	flag.Int64Var(&N, "N", 256, "Number of chunks.")
+	var incp float64
+	flag.Float64Var(&incp, "incp", 0.3, "Probability of including to check.")
+//	var bool 
+//	flag.BoolVar(p *bool, name string, value bool, usage string)flag.
+	flag.Parse()
+
+	// Test portion.
 	fmt.Println("Denote info if it goes wrong.")
 	fmt.Println("Seed:", seed)
 	r := rand.New(rand.NewSource(seed))
@@ -24,7 +39,7 @@ func run_test(seed int64, n_min, n_max, N int32, incp float64) {
 	gen := merkle.NewMerkleTreeGen(sha256.New(), false)  //Put chunks in.
 	list := []*merkle.MerkleNode{}
 	included := []bool{}
-	for i:= int32(0) ; i < N ; i++ {
+	for i:= int64(0) ; i < N ; i++ {
 		chunk := test_common.Rand_chunk(r, n_min, n_max)
 		include_this := (rand.Float64() <= incp)
 		list = append(list, gen.AddChunk(chunk, include_this))
@@ -37,7 +52,7 @@ func run_test(seed int64, n_min, n_max, N int32, incp float64) {
 //Reset random function, doing exact same to it.
 	r = rand.New(rand.NewSource(seed))
 	j, r2, ll := 0, rand.New(rand.NewSource(seed + 1)), 0
-	for i:= int32(0) ; i < N ; i++ {
+	for i := int64(0) ; i < N ; i++ {
 		chunk := test_common.Rand_chunk(r, n_min, n_max)  // Recreates exactly as it was.
 		root, valid := list[i].IsValid(-1)
 		switch {
@@ -49,7 +64,8 @@ func run_test(seed int64, n_min, n_max, N int32, incp float64) {
 			fmt.Println("Not the correct top.", 
 				test_common.HashStr(roothash), test_common.HashStr(root.Hash))
 		default:
-			if r := list[i].Verify(roothash, chunk); r != merkle.Correct {
+			r := list[i].Verify(roothash, chunk)
+			if r != merkle.Correct {
 				fmt.Println("Everything checked out but Verify didnt?", r)
 			}
 		}
@@ -83,19 +99,4 @@ func run_test(seed int64, n_min, n_max, N int32, incp float64) {
 	}
 	fmt.Println("---")
 	fmt.Println("No messages above implies success. Had", j)
-}
-
-func main() {
-	var seed int64
-	flag.Int64Var(&seed, "seed", time.Now().UnixNano(), "Random seed for test.")
-	var n_min, n_max, N int64
-	flag.Int64Var(&n_min, "n_min", 1, "Minimum length of random chunk.")
-	flag.Int64Var(&n_max, "n_max", 256, "Maximum length of random chunk.")
-	flag.Int64Var(&N, "N", 256, "Number of chunks.")
-	var incp float64
-	flag.Float64Var(&incp, "incp", 0.3, "Probability of including to check.")
-//	flag.BoolVar(p *bool, name string, value bool, usage string)flag.
-	flag.Parse()
-
-	run_test(seed, int32(n_min), int32(n_max), int32(N), incp)
 }
