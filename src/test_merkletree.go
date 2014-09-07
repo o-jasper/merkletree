@@ -5,7 +5,6 @@ import (
 	"flag"
 	"math/rand"
 	"crypto/sha256"
-	"encoding/hex"
 
 	"time"
 
@@ -14,9 +13,6 @@ import (
 
 	"hash"
 )
-
-func hashBytes(h hash.Hash) []byte { return h.Sum([]byte{}) }
-func hashStr(h hash.Hash) string { return hex.EncodeToString(hashBytes(h)) }
 
 //Add a `N` chunks and lists the tree leaves. `incp` is the probability of
 // interest in a chunk.
@@ -34,7 +30,7 @@ func run_test(seed int64, n_min, n_max, N int32, incp float64) {
 		included = append(included, include_this)
 	}
 	roothash := gen.Finish().Hash  //Get the root hash.
-	fmt.Println("Root:", hashStr(roothash))
+	fmt.Println("Root:", test_common.HashStr(roothash))
 
 	fmt.Println("---")
 //Reset random function, doing exact same to it.
@@ -49,7 +45,8 @@ func run_test(seed int64, n_min, n_max, N int32, incp float64) {
 		case !list[i].CorrespondsToChunk(chunk):
 			fmt.Println("Chunk", i , "didnt check out.")
 		case !root.CorrespondsToHash(roothash):
-			fmt.Println("Not the correct top.", hashStr(roothash), hashStr(root.Hash))
+			fmt.Println("Not the correct top.", 
+				test_common.HashStr(roothash), test_common.HashStr(root.Hash))
 		default:
 			if r := list[i].Verify(roothash, chunk); r != merkletree.Correct {
 				fmt.Println("Everything checked out but Verify didnt?", r)
@@ -62,8 +59,7 @@ func run_test(seed int64, n_min, n_max, N int32, incp float64) {
 
 			if !merkletree.Verify(roothash, chunk, path) {
 				fmt.Println(" - One of the Merkle Paths did not check out!")
-//				root := merkletree.ExpectedRoot(merkletree.H(chunk), path)
-//				fmt.Println(hex.EncodeToString(root[:]))
+				fmt.Println(test_common.HashStr(root.Hash))
 			}
 			j += 1
 		}

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"flag"
 	"math/rand"
-	"encoding/hex"
 
 	"time"
 
@@ -13,6 +12,8 @@ import (
 
 	"signed_merkletree"
 	"signed_merkletree/signed_merkletree_pubkey"
+	
+	"crypto/sha256"
 )
 
 //Add a `N` chunks and lists the tree leaves. `incp` is the probability of
@@ -21,13 +22,13 @@ func run_test(seed int64, n_min int32, n_max int32, N int, times int, subtimes i
 	fmt.Println("Seed:", seed)
 	r := rand.New(rand.NewSource(seed))
 	
-	gen := signed_merkletree.NewSignedMerkleProver()
+	gen := signed_merkletree.NewSignedMerkleProver(sha256.New(), false)
 	for i:= 0 ; i < N ; i++ {
 		gen.AddChunk(test_common.Rand_chunk(r, n_min, n_max))
 	}
 	root := gen.Finish()  //Get the root hash.
 	fmt.Println("")
-	fmt.Println("Root:", hex.EncodeToString(root.Hash[:]))
+	fmt.Println("Root:", test_common.HashStr(root.Hash))
 
 	fmt.Println("---")
 
@@ -52,6 +53,8 @@ func run_test(seed int64, n_min int32, n_max int32, N int, times int, subtimes i
 				fmt.Println("Didnt work", r, ";", i, i2)
 			}
 		}
+
+		// TODO no false positive test. (important!)
 	}
 	fmt.Println("---")
 	fmt.Println("No messages above implies success.")

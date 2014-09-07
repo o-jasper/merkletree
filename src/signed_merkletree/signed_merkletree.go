@@ -10,7 +10,7 @@ package signed_merkletree
 
 import (
 	"merkletree"
-	"crypto/sha256"
+	"hash"
 )
 
 type Getter interface {
@@ -49,13 +49,14 @@ func (gen *SignedMerkleProver) AddChunk(chunk []byte) *merkletree.MerkleNode {
 
 // Prepares to prove a chunk, given a nonce and signer.
 func (gen *SignedMerkleProver) AddAllSigned(nonce []byte, signer Signer) (*merkletree.MerkleNode, *SignedMerkleProver) {
-	smp := NewSignedMerkleProver()
+	smp := NewSignedMerkleProver(gen.Hash, gen.IncludeIndex)
 	for smp.N < gen.N {
 		smp.AddChunk(signer.Sign(append(gen.Getter.GetChunk(smp.N), nonce...)))
 	}
 	return smp.Finish(), &smp
 }
 
+// Note: assumes the index and nonce is already at the verifier.
 type SignedMerkleProof struct {
 	node      *merkletree.MerkleNode
 	sig_node  *merkletree.MerkleNode
@@ -73,7 +74,7 @@ func (gen *SignedMerkleProver) NewSignedMerkleProof_FromIndex(signed *SignedMerk
 
 //TODO/NOTE, takes the whole damn chunk & signature.. Or blockchain chunks have
 // to be granular..
-func (proof *SignedMerkleProof) Verify(nonce []byte, pubkey Pubkey, root [sha256.Size]byte, sig_root [sha256.Size]byte) int8 {
+func (proof *SignedMerkleProof) Verify(nonce []byte, pubkey Pubkey, root hash.Hash, sig_root hash.Hash) int8 {
 	//Check that the signature applies.
 	if !pubkey.VerifySignature(proof.sig_chunk, append(proof.chunk, nonce...)) {
 		return merkletree.WrongSig
@@ -85,6 +86,15 @@ func (proof *SignedMerkleProof) Verify(nonce []byte, pubkey Pubkey, root [sha256
 		}
 	}
 }
+
+//Turns the proof into bytes.
+/*func (proof *SignedMerkleProof) ByteProof() {
+	ret := append(proof.sig_chunk, proof.chunk...)
+	ret = append(ret, byte(len(proof.node.ByteProof())/32))
+	ret = append(ret, proof.node.ByteProof()...) //Issue.. it is [][32]byte
+	ret = append(ret, proof.sig_node.ByteProof()...)
+	return ret
+}*/
 
 // Simple getter for it, two maps.
 type SimpleGetter struct {
@@ -110,7 +120,7 @@ func NewSimpleGetter() SimpleGetter {
 	return SimpleGetter{map[int64]*merkletree.MerkleNode{}, map[int64][]byte{}}
 }
 
-func NewSignedMerkleProver() SignedMerkleProver {
+func NewSignedMerkleProver(h hash.Hash, include_index bool) SignedMerkleProver {
 	getter := NewSimpleGetter()
-	return SignedMerkleProver{merkletree.NewMerkleTreeGen(), int64(0), &getter}
+	return SignedMerkleProver{merkletree.NewMerkleTreeGen(h, include_index), int64(0), &getter}
 }
