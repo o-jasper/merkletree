@@ -29,7 +29,7 @@ also, `merkletree.Finish` can sort-of be used prematurely for lobsidedness.
 On the other hand, off-chain, the efficiency in memory is better if things you want
 to keep track of are bunched together.
 
-### Functions
+### Functions (TODO need updating)
 
     func NewMerkleTreeGen() *MerkleTreeGen
     

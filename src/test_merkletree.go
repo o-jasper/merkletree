@@ -26,8 +26,8 @@ func main() {
 	flag.Int64Var(&N, "N", 256, "Number of chunks.")
 	var incp float64
 	flag.Float64Var(&incp, "incp", 0.3, "Probability of including to check.")
-//	var bool 
-//	flag.BoolVar(p *bool, name string, value bool, usage string)flag.
+	var with_index bool 
+	flag.BoolVar(&with_index, "with_index", true, "Wether to have an index in each chunk")
 	flag.Parse()
 
 	// Test portion.
@@ -35,7 +35,7 @@ func main() {
 	fmt.Println("Seed:", seed)
 	r := rand.New(rand.NewSource(seed))
 
-	gen := merkle.NewMerkleTreeGen(sha256.New(), false)  //Put chunks in.
+	gen := merkle.NewMerkleTreeGen(sha256.New(), with_index)  //Put chunks in.
 	list := []*merkle.MerkleNode{}
 	included := []bool{}
 	for i:= int64(0) ; i < N ; i++ {
@@ -63,17 +63,21 @@ func main() {
 			fmt.Println("Not the correct top.", 
 				test_common.HashStr(roothash), test_common.HashStr(root.Hash))
 		default:
-			r := list[i].Verify(roothash, chunk)
+			var r int8
+			if with_index { r = list[i].VerifyWithIndex(roothash, uint64(i), chunk)
+			}	else { r = list[i].Verify(roothash, chunk) }
 			if r != merkle.Correct {
 				fmt.Println("Everything checked out but Verify didnt?", r)
 			}
 		}
 		
 		if included[i] {
-			path := list[i].Path()
+			path, success := list[i].Path(), false
 			ll = len(path)
-
-			if !merkle.Verify(roothash, chunk, path) {
+			if with_index { success = merkle.VerifyWithIndex(roothash, uint64(i), chunk, path)
+			} else { success = merkle.Verify(roothash, chunk, path) }
+			
+			if !success {
 				fmt.Println(" - One of the Merkle Paths did not check out!")
 				fmt.Println(test_common.HashStr(root.Hash))
 			}
