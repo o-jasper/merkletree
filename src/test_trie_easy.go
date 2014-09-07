@@ -18,7 +18,7 @@ func main() {
 	node := trie_easy.NewTrie(nil)
 	compare := map[string]int{}
 	
-	n_min, n_max, N := int32(3), int32(8), 10
+	n_min, n_max, N := int64(3), int64(8), 10
 	
 	fmt.Println("= Put stuff in twice.")
 	for i := 0 ; i < N ; i++ {
