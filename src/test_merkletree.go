@@ -19,9 +19,8 @@ import (
 func main() {
 
 //Read settings portion.
-	var seed int64
+	var seed, n_min, n_max, N int64
 	flag.Int64Var(&seed, "seed", time.Now().UnixNano(), "Random seed for test.")
-	var n_min, n_max, N int64
 	flag.Int64Var(&n_min, "n_min", 1, "Minimum length of random chunk.")
 	flag.Int64Var(&n_max, "n_max", 256, "Maximum length of random chunk.")
 	flag.Int64Var(&N, "N", 256, "Number of chunks.")

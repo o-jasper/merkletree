@@ -43,6 +43,7 @@ func main() {
 			fmt.Print("*")
 			j+= 1;
 		}
+		// TODO check against false positive.
 	}
 	fmt.Println("\nFailed", j, "of", times, "seed", seed)
 }

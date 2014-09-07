@@ -19,18 +19,13 @@ import (
 func main() {
 
 //Get data.
-	var seed int64
+	var seed, n_min, n_max, N, times, subtimes int64
 	flag.Int64Var(&seed, "seed", time.Now().UnixNano(), "Random seed for test.")
-	var n_min int64
 	flag.Int64Var(&n_min, "n_min", 1, "Minimum length of random chunk.")
-	var n_max int64
 	flag.Int64Var(&n_max, "n_max", 256, "Maximum length of random chunk.")
-	var N int
-	flag.IntVar(&N, "N", 80, "Number of chunks.")
-	var times int
-	flag.IntVar(&times, "times", 16, "Number of times to challenge.")
-	var subtimes int
-	flag.IntVar(&subtimes, "subtimes", 8, "Number of indices per challenge.")
+	flag.Int64Var(&N, "N", 80, "Number of chunks.")
+	flag.Int64Var(&times, "times", 16, "Number of times to challenge.")
+	flag.Int64Var(&subtimes, "subtimes", 8, "Number of indices per challenge.")
 	
 	flag.Parse()
 
@@ -40,7 +35,7 @@ func main() {
 	r := rand.New(rand.NewSource(seed))
 	
 	gen := signed_merkle.NewSignedMerkleProver(sha256.New(), false)
-	for i:= 0 ; i < N ; i++ {
+	for i:= int64(0) ; i < N ; i++ {
 		gen.AddChunk(test_common.Rand_chunk(r, n_min, n_max))
 	}
 	root := gen.Finish()  //Get the root hash.
@@ -52,13 +47,13 @@ func main() {
 	// Set up signer.
 	signer, pubkey := signed_merkle_pubkey.GenerateKey()
 
-	for i:= 0 ; i < times ; i++ {
+	for i:= int64(0) ; i < times ; i++ {
 		// First part of challenge is a nonce.
 		nonce := test_common.Rand_chunk(r, n_min, n_max)
 		// Respond with root of the signed merkle tree.
 		sigroot, smp:= gen.AddAllSigned(nonce, signer)
 
-		for i2 := 0 ; i2 < subtimes ; i2++ {
+		for i2 := int64(0) ; i2 < subtimes ; i2++ {
 			// (Nothing to check yet) Second part is randomly pick chunk.
 			j := rand.Int63n(int64(N))
 			
