@@ -7,11 +7,11 @@ import (
 
 	"time"
 
-	"merkletree"
-	"merkletree/test_common"
+	"merkle"
+	"merkle/test_common"
 
-	"signed_merkletree"
-	"signed_merkletree/signed_merkletree_pubkey"
+	"signed_merkle"
+	"signed_merkle/signed_merkle_pubkey"
 	
 	"crypto/sha256"
 )
@@ -19,10 +19,11 @@ import (
 //Add a `N` chunks and lists the tree leaves. `incp` is the probability of
 // interest in a chunk.
 func run_test(seed int64, n_min int32, n_max int32, N int, times int, subtimes int) {
+	fmt.Println("Denote info if it goes wrong.")
 	fmt.Println("Seed:", seed)
 	r := rand.New(rand.NewSource(seed))
 	
-	gen := signed_merkletree.NewSignedMerkleProver(sha256.New(), false)
+	gen := signed_merkle.NewSignedMerkleProver(sha256.New(), false)
 	for i:= 0 ; i < N ; i++ {
 		gen.AddChunk(test_common.Rand_chunk(r, n_min, n_max))
 	}
@@ -33,7 +34,7 @@ func run_test(seed int64, n_min int32, n_max int32, N int, times int, subtimes i
 	fmt.Println("---")
 
 	// Set up signer.
-	signer, pubkey := signed_merkletree_pubkey.GenerateKey()
+	signer, pubkey := signed_merkle_pubkey.GenerateKey()
 
 	for i:= 0 ; i < times ; i++ {
 		// First part of challenge is a nonce.
@@ -49,12 +50,11 @@ func run_test(seed int64, n_min int32, n_max int32, N int, times int, subtimes i
 			// Regular and signature node.
 			proof := gen.NewSignedMerkleProof_FromIndex(smp, j)
 			//Verify it.
-			if r := proof.Verify(nonce, pubkey, root.Hash, sigroot.Hash); r != merkletree.Correct {
+			if r := proof.Verify(nonce, pubkey, root.Hash, sigroot.Hash); r != merkle.Correct {
 				fmt.Println("Didnt work", r, ";", i, i2)
 			}
+			// TODO no false positive test. (important!)
 		}
-
-		// TODO no false positive test. (important!)
 	}
 	fmt.Println("---")
 	fmt.Println("No messages above implies success.")

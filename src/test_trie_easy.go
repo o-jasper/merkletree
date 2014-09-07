@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"trie_easy"
 
-	"merkletree/test_common"
+	"merkle/test_common"
 	"encoding/hex"
 
 	"time"

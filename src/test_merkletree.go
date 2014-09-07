@@ -8,8 +8,8 @@ import (
 
 	"time"
 
-	"merkletree"
-	"merkletree/test_common"
+	"merkle"
+	"merkle/test_common"
 
 	"hash"
 )
@@ -17,11 +17,12 @@ import (
 //Add a `N` chunks and lists the tree leaves. `incp` is the probability of
 // interest in a chunk.
 func run_test(seed int64, n_min, n_max, N int32, incp float64) {
+	fmt.Println("Denote info if it goes wrong.")
 	fmt.Println("Seed:", seed)
 	r := rand.New(rand.NewSource(seed))
 
-	gen := merkletree.NewMerkleTreeGen(sha256.New(), false)  //Put chunks in.
-	list := []*merkletree.MerkleNode{}
+	gen := merkle.NewMerkleTreeGen(sha256.New(), false)  //Put chunks in.
+	list := []*merkle.MerkleNode{}
 	included := []bool{}
 	for i:= int32(0) ; i < N ; i++ {
 		chunk := test_common.Rand_chunk(r, n_min, n_max)
@@ -48,7 +49,7 @@ func run_test(seed int64, n_min, n_max, N int32, incp float64) {
 			fmt.Println("Not the correct top.", 
 				test_common.HashStr(roothash), test_common.HashStr(root.Hash))
 		default:
-			if r := list[i].Verify(roothash, chunk); r != merkletree.Correct {
+			if r := list[i].Verify(roothash, chunk); r != merkle.Correct {
 				fmt.Println("Everything checked out but Verify didnt?", r)
 			}
 		}
@@ -57,7 +58,7 @@ func run_test(seed int64, n_min, n_max, N int32, incp float64) {
 			path := list[i].Path()
 			ll = len(path)
 
-			if !merkletree.Verify(roothash, chunk, path) {
+			if !merkle.Verify(roothash, chunk, path) {
 				fmt.Println(" - One of the Merkle Paths did not check out!")
 				fmt.Println(test_common.HashStr(root.Hash))
 			}
@@ -75,7 +76,7 @@ func run_test(seed int64, n_min, n_max, N int32, incp float64) {
 				h.Write(test_common.Rand_bytes(r2, 16))
 				path = append(path, h)
 			}
-			if merkletree.Verify(roothash, chunk, path) {
+			if merkle.Verify(roothash, chunk, path) {
 				fmt.Println(" - False positive!")
 			}
 		}
@@ -87,11 +88,9 @@ func run_test(seed int64, n_min, n_max, N int32, incp float64) {
 func main() {
 	var seed int64
 	flag.Int64Var(&seed, "seed", time.Now().UnixNano(), "Random seed for test.")
-	var n_min int64
+	var n_min, n_max, N int64
 	flag.Int64Var(&n_min, "n_min", 1, "Minimum length of random chunk.")
-	var n_max int64
 	flag.Int64Var(&n_max, "n_max", 256, "Maximum length of random chunk.")
-	var N int64
 	flag.Int64Var(&N, "N", 256, "Number of chunks.")
 	var incp float64
 	flag.Float64Var(&incp, "incp", 0.3, "Probability of including to check.")

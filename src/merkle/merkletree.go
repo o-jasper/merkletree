@@ -1,5 +1,5 @@
 
-package merkletree
+package merkle
 
 import (
 	"hash"

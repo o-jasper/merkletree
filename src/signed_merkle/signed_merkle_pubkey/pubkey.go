@@ -1,6 +1,6 @@
 //Note: really this is basically more general than just for this thing...
-// (why didnt go come like this?.. Unclear to me)
-package signed_merkletree_pubkey
+// Some of go's standard lib seems to be a bit too limited.
+package signed_merkle_pubkey
 
 import (
 	"crypto/ecdsa"

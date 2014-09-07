@@ -1,4 +1,4 @@
-package signed_merkletree
+package signed_merkle
 
 //WARNING about using this for Proof of Custody - style stuff.
 // Some pubkey signing algos might reduce to a checksum being signed, so people
@@ -9,13 +9,13 @@ package signed_merkletree
 // granular as to have ~ the size of a checksum.
 
 import (
-	"merkletree"
+	"merkle"
 	"hash"
 )
 
 type Getter interface {
-	GetNode(int64) *merkletree.MerkleNode
-	SetNode(int64, *merkletree.MerkleNode)
+	GetNode(int64) *merkle.MerkleNode
+	SetNode(int64, *merkle.MerkleNode)
 
 	GetChunk(int64) []byte
 	SignedMerkleProver_SetChunk(int64, []byte)
@@ -30,13 +30,13 @@ type Pubkey interface {
 
 // Basically intended to create permanent complete merkle trees, 
 type SignedMerkleProver struct {
-	merkletree.MerkleTreeGen
+	merkle.MerkleTreeGen
 	N int64
 	Getter
 }
 
 // Adds non-signed chunks.
-func (gen *SignedMerkleProver) AddChunk(chunk []byte) *merkletree.MerkleNode {
+func (gen *SignedMerkleProver) AddChunk(chunk []byte) *merkle.MerkleNode {
 	cur := gen.MerkleTreeGen.AddChunk(chunk, true)
 	gen.Getter.SetNode(gen.N, cur)
 	// Note: It doesnt care how it gets set. If it is set via another way already,
@@ -48,7 +48,7 @@ func (gen *SignedMerkleProver) AddChunk(chunk []byte) *merkletree.MerkleNode {
 // (finalize after adding the chunks like the above)
 
 // Prepares to prove a chunk, given a nonce and signer.
-func (gen *SignedMerkleProver) AddAllSigned(nonce []byte, signer Signer) (*merkletree.MerkleNode, *SignedMerkleProver) {
+func (gen *SignedMerkleProver) AddAllSigned(nonce []byte, signer Signer) (*merkle.MerkleNode, *SignedMerkleProver) {
 	smp := NewSignedMerkleProver(gen.Hash, gen.IncludeIndex)
 	for smp.N < gen.N {
 		smp.AddChunk(signer.Sign(append(gen.Getter.GetChunk(smp.N), nonce...)))
@@ -58,8 +58,8 @@ func (gen *SignedMerkleProver) AddAllSigned(nonce []byte, signer Signer) (*merkl
 
 // Note: assumes the index and nonce is already at the verifier.
 type SignedMerkleProof struct {
-	node      *merkletree.MerkleNode
-	sig_node  *merkletree.MerkleNode
+	node      *merkle.MerkleNode
+	sig_node  *merkle.MerkleNode
 	chunk     []byte
 	sig_chunk []byte
 }
@@ -77,12 +77,12 @@ func (gen *SignedMerkleProver) NewSignedMerkleProof_FromIndex(signed *SignedMerk
 func (proof *SignedMerkleProof) Verify(nonce []byte, pubkey Pubkey, root hash.Hash, sig_root hash.Hash) int8 {
 	//Check that the signature applies.
 	if !pubkey.VerifySignature(proof.sig_chunk, append(proof.chunk, nonce...)) {
-		return merkletree.WrongSig
+		return merkle.WrongSig
 	} else { //Check that the Merkle paths are right.
-		if r := proof.sig_node.Verify(sig_root, proof.sig_chunk) ; r == merkletree.Correct {
+		if r := proof.sig_node.Verify(sig_root, proof.sig_chunk) ; r == merkle.Correct {
 			return proof.node.Verify(root, proof.chunk) //It takes over.
 		} else { //Makes it the Signature path error version.
-			return r + merkletree.Merkletree_NPathWrongs
+			return r + merkle.Merkletree_NPathWrongs
 		}
 	}
 }
@@ -98,14 +98,14 @@ func (proof *SignedMerkleProof) Verify(nonce []byte, pubkey Pubkey, root hash.Ha
 
 // Simple getter for it, two maps.
 type SimpleGetter struct {
-	Nodes map[int64] *merkletree.MerkleNode
+	Nodes map[int64] *merkle.MerkleNode
 	Chunks map[int64] []byte
 }
 
-func (sg *SimpleGetter) SetNode(i int64, node *merkletree.MerkleNode) {
+func (sg *SimpleGetter) SetNode(i int64, node *merkle.MerkleNode) {
 	sg.Nodes[i] = node
 }
-func (sg *SimpleGetter) GetNode(i int64) *merkletree.MerkleNode {
+func (sg *SimpleGetter) GetNode(i int64) *merkle.MerkleNode {
 	return sg.Nodes[i]
 }
 
@@ -117,10 +117,10 @@ func (sg *SimpleGetter) GetChunk(i int64) []byte {
 }
 
 func NewSimpleGetter() SimpleGetter {
-	return SimpleGetter{map[int64]*merkletree.MerkleNode{}, map[int64][]byte{}}
+	return SimpleGetter{map[int64]*merkle.MerkleNode{}, map[int64][]byte{}}
 }
 
 func NewSignedMerkleProver(h hash.Hash, include_index bool) SignedMerkleProver {
 	getter := NewSimpleGetter()
-	return SignedMerkleProver{merkletree.NewMerkleTreeGen(h, include_index), int64(0), &getter}
+	return SignedMerkleProver{merkle.NewMerkleTreeGen(h, include_index), int64(0), &getter}
 }
