@@ -26,6 +26,9 @@ func main() {
 	flag.Int64Var(&N, "N", 80, "Number of chunks.")
 	flag.Int64Var(&times, "times", 16, "Number of times to challenge.")
 	flag.Int64Var(&subtimes, "subtimes", 8, "Number of indices per challenge.")
+	var negative bool
+	flag.BoolVar(&negative, "negative", false,
+		"Wether to check for positives or try against false positives.")
 	
 	flag.Parse()
 
@@ -46,12 +49,19 @@ func main() {
 
 	// Set up signer.
 	signer, pubkey := signed_merkle_pubkey.GenerateKey()
+	wrong_signer, _ := signed_merkle_pubkey.GenerateKey()
 
 	for i:= int64(0) ; i < times ; i++ {
 		// First part of challenge is a nonce.
 		nonce := test_common.Rand_chunk(r, n_min, n_max)
 		// Respond with root of the signed merkle tree.
-		sigroot, smp:= gen.AddAllSigned(nonce, signer)
+		var sigroot *merkle.MerkleNode
+		var smp *signed_merkle.SignedMerkleProver
+		if !negative {
+			sigroot, smp = gen.AddAllSigned(nonce, signer)
+		} else {
+			sigroot, smp = gen.AddAllSigned(nonce, wrong_signer)
+		}
 
 		for i2 := int64(0) ; i2 < subtimes ; i2++ {
 			// (Nothing to check yet) Second part is randomly pick chunk.
@@ -61,10 +71,14 @@ func main() {
 			// Regular and signature node.
 			proof := gen.NewSignedMerkleProof_FromIndex(smp, j)
 			//Verify it.
-			if r := proof.Verify(nonce, pubkey, root.Hash, sigroot.Hash); r != merkle.Correct {
-				fmt.Println("Didnt work", r, ";", i, i2)
+			if !negative {
+				if r := proof.Verify(nonce, pubkey, root.Hash, sigroot.Hash); r != merkle.Correct {
+					fmt.Println("Wrongly negative", r, ";", i, i2)
+				}
+			}	else if r := proof.Verify(nonce, pubkey, root.Hash, sigroot.Hash); r != merkle.WrongSig {
+				if r == merkle.Correct { fmt.Println("False positive with wrong signer")
+				} else { fmt.Println("Signature wasnt wrong with *just* that wrong.", r) }
 			}
-			// TODO no false positive test. (important!)
 		}
 	}
 	fmt.Println("---")
