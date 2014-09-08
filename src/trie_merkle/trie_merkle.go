@@ -7,9 +7,12 @@ import (
 	"fmt"
 )
 
+//TODO drat.. Needs to be 'indexed'..?..
+
 type HashTrieInterface interface {
 	trie_easy.TrieInterface
 	Hash(func() hash.Hash) hash.Hash
+	HashPath(func() hash.Hash) hash.Hash
 }
 
 type Hashify struct {
@@ -54,6 +57,17 @@ func (n *Hashify) Hash(blank func() hash.Hash) hash.Hash {
 	fmt.Println(n.What, ok, got)
 	panic("Unidentified type")
 	return blank()
+}
+
+func (n *Hashify) HashPath(str []byte, blank func() hash.Hash) []hash.Hash {
+	path, i := (&trie_easy.Trie{n}).DownPath(str, int64(0), false)
+	if i != 2*int64(len(str)) { return []hash.Hash{} } // Data not in there.
+
+	hpath := []hash.Hash{}
+	for _, el := range path {
+		hpath = append(hpath, el.Actual.(HashTrieInterface).Hash(blank))
+	}
+	return hpath
 }
 
 func (n *Hashify) Down1(str []byte, i int64, change bool) *trie_easy.Trie {

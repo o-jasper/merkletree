@@ -28,6 +28,7 @@ type Trie struct {
 
 func NewTrie(actual TrieInterface) Trie { return Trie{Actual:actual} }
 
+// GO down as far as possible.
 func (n *Trie) Downward(str []byte, i int64, changing bool) (*Trie, int64) {
 	if n.Actual == nil { return n, i }
 	m := n
@@ -35,11 +36,27 @@ func (n *Trie) Downward(str []byte, i int64, changing bool) (*Trie, int64) {
 		if m.Actual == nil { return n, i - 1 }
 		n = m
 		iface, ok := m.Actual.(TrieInterface)
-		if !ok { panic("Not trieinterfaable!!") }
+		if !ok { panic("Not trieinterfacable!!") }
 		m = iface.Down1(str, i, changing)
 		i += 1
 	}
 	return m, i
+}
+
+// Bleh this is a trivial variation.. Dont see how to make it non-repetitive.
+func (n *Trie) DownPath(str []byte, i int64, changing bool) ([]*Trie, int64) {
+	if n.Actual == nil { return []*Trie{}, i }
+	m, path := n, []*Trie{}
+	for i < 2*int64(len(str)) {
+		path = append(path, m)
+		if m.Actual == nil { return path, i - 1 }
+		n = m
+		iface, ok := m.Actual.(TrieInterface)
+		if !ok { panic("Not trieinterfacable!!") }
+		m = iface.Down1(str, i, changing)
+		i += 1
+	}
+	return path, i
 }
 
 func (n* Trie) Get(str []byte, i int64) interface{} {

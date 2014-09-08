@@ -12,4 +12,3 @@ func getBytes(key interface{}) []byte {
 	gob.NewEncoder(&buf).Encode(key)
 	return buf.Bytes()
 }
-
