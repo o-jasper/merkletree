@@ -33,7 +33,7 @@ func (n *Trie) Downward(str []byte, i int64, changing bool) (*Trie, int64) {
 	if n.Actual == nil { return n, i }
 	m := n
 	for i < 2*int64(len(str)) {
-		if m.Actual == nil { return n, i - 1 }
+		if m == nil || m.Actual == nil { return n, i - 1 }
 		n = m
 		iface, ok := m.Actual.(TrieInterface)
 		if !ok { panic("Not trieinterfacable!!") }
