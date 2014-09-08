@@ -1,9 +1,8 @@
 
 package merkle
 
-import (
-	"hash"
-)
+import "hash"
+import . "hash_extra"
 
 // Note.. for instances of hash.Hash i am relying on copy-value..
 // _seems_ like the spec is unclear on this? (not read enough)
@@ -18,7 +17,7 @@ type MerkleNode struct {
 }
 
 func selective_new_MerkleNode(left, right *MerkleNode) *MerkleNode {
-	n := MerkleNode{Hash : H_2(left.Hash, right.Hash), Left : left, Right : right, Up:nil}
+	n := MerkleNode{Hash : H_U2(left.Hash, right.Hash), Left : left, Right : right, Up:nil}
 	n.Interest = left.Interest || right.Interest
 	if n.Interest {
 		left.Up, right.Up = &n, &n
@@ -109,7 +108,7 @@ func (gen *MerkleTreeGen) Finish() *MerkleNode {
 // Checks a merkle path, _except_ the root and leaf.
 func (node *MerkleNode) IsValid(recurse int32) (*MerkleNode, bool) {
 	switch {
-	case node.Left != nil && node.Right != nil &&	H_2(node.Left.Hash, node.Right.Hash) != node.Hash:
+	case node.Left != nil && node.Right != nil &&	H_U2(node.Left.Hash, node.Right.Hash) != node.Hash:
 		return node, false
 	case recurse == 0 || node.Up == nil:
 		return node, true
@@ -199,17 +198,16 @@ func (node *MerkleNode) Path() []hash.Hash {
 func (node *MerkleNode) path(from *MerkleNode) []hash.Hash {
 	path := []hash.Hash{}
 	if node.Up != nil {	path = node.Up.path(node) }
-	switch {
-	case node.Right == from:  return append(path, node.Left.Hash)
-	case node.Left == from:   return append(path, node.Right.Hash)
-	default:                  return nil // Invalid Merkle tree.
+	if node.Right != from  && node.Right != from { 
+		return nil
 	}
+	return append(path, node.Left.Hash)
 }
 
 //Calculate expected root, given the path.
 func ExpectedRoot(H_leaf hash.Hash, path []hash.Hash) hash.Hash {
 	x := H_leaf
-	for i := range path {	x = H_2(path[len(path) - i - 1], x) }
+	for i := range path {	x = H_U2(path[len(path) - i - 1], x) }
 	return x
 }
 
