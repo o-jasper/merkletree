@@ -11,31 +11,33 @@ import . "hash_extra"
 
 type HashTrieInterface interface {
 	TrieInterface
-	Hash(func() hash.Hash) hash.Hash
-	HashPath(func() hash.Hash) hash.Hash
+	Hash() hash.Hash
+	HashPath() hash.Hash
 }
 
 type Hashify struct {
 	What TrieInterface
 	H hash.Hash
+	Changed bool
 }
 
-func Hash(sub *Trie, blank func() hash.Hash) hash.Hash {
-	if sub.Actual == nil { return blank() }
+func Hash(sub *Trie, blank hash.Hash) hash.Hash {
+	if sub.Actual == nil { return blank }
 
 	if iface, yep := sub.Actual.(HashTrieInterface) ; yep {
-		return iface.Hash(blank)
+		return iface.Hash()
 	} else if iface, yep := sub.Actual.(TrieInterface) ; yep {
-		sub.Actual = &Hashify{iface, nil}
-		return sub.Actual.(*Hashify).Hash(blank)
+		sub.Actual = &Hashify{iface, blank, true}
+		return sub.Actual.(*Hashify).Hash()
 	} else { panic("This doesnt have the interface it should.") }
 }
 
 // Returns hashes of things.
-func (n *Hashify) Hash(blank func() hash.Hash) hash.Hash {
-	if n.H != nil { return n.H } // Already got it.
+func (n *Hashify) Hash() hash.Hash {
+	if !n.Changed { return n.H } // Already got it.
 	// TODO kindah limited doing these one by one.
 
+	blank := ContinueUse(n.H)
 	if n.What == nil { panic("Hashify may not have nil item") }
 	if m, ok := n.What.(*Node16) ; ok {
 		h := make([]hash.Hash, 8, 8)  // Note: can be done with less memory.
@@ -49,23 +51,23 @@ func (n *Hashify) Hash(blank func() hash.Hash) hash.Hash {
 		return n.H
 	}
 	if m, ok := n.What.(DataNode) ; ok {
-		n.H = blank()
+		n.H = blank
 		n.H.Write(getBytes(m.Data))
 		return n.H
 	}
 	got, ok := n.What.(TrieInterface)
 	fmt.Println(n.What, ok, got)
 	panic("Unidentified type")
-	return blank()
+	return blank
 }
 
-func (n *Hashify) HashPath(str []byte, blank func() hash.Hash) []hash.Hash {
+func (n *Hashify) HashPath(str []byte) []hash.Hash {
 	path, i := (&Trie{n}).DownPath(str, int64(0), false)
 	if i != 2*int64(len(str)) { return []hash.Hash{} } // Data not in there.
 
 	hpath := make([]hash.Hash, len(path))
 	for _, el := range path {
-		hpath = append(hpath, el.Actual.(HashTrieInterface).Hash(blank))
+		hpath = append(hpath, el.Actual.(HashTrieInterface).Hash())
 	}
 	return hpath
 }
@@ -77,7 +79,7 @@ func CheckHashPath(str []byte, path []hash.Hash, chunk interface{}) bool {
 
 // And obligations:
 func (n *Hashify) Down1(str []byte, i int64, change bool) *Trie {
-	if change { n.H = nil }
+	if change { n.Changed = true }
 	return n.What.Down1(str, i, change)
 }
 

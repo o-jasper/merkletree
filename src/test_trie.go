@@ -66,5 +66,5 @@ func main() {
 		}
 	}
 
-	fmt.Println(test_common.HashStr(trie_merkle.Hash(&node, sha256.New)))
+	fmt.Println(test_common.HashStr(trie_merkle.Hash(&node, sha256.New())))
 }

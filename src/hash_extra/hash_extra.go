@@ -1,4 +1,4 @@
-package merkle
+package hash_extra
 
 import (
 	"hash"
@@ -31,8 +31,10 @@ func (hr HashResult) BlockSize() int { panic("This is a dud hash.Hash") }
 func (hr HashResult) Write(_ []byte) (_ int, _ error){ panic("This is a dud hash.Hash") }
 
 func ContinueUse(input hash.Hash) hash.Hash {
-	if hr, yes := input.(HashResult) ; yes { return hr.Continue
-	} else { return input }
+	if hr, yes := input.(HashResult) ; yes { return hr.Continue }
+	if input == nil { panic("Problem, dont have a hash!") }
+	input.Reset()
+	return input
 }
 
 //
