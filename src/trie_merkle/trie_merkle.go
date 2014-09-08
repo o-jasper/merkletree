@@ -3,9 +3,15 @@ package trie_merkle
 import (
 	"trie_easy"
 	"hash"
-	"merkle"
 	"fmt"
 )
+
+func H_2(a, b hash.Hash, blank func() hash.Hash) hash.Hash {
+	h := blank()
+	h.Write(a.Sum([]byte{}))
+	h.Write(b.Sum([]byte{}))
+	return h
+}
 
 //TODO drat.. Needs to be 'indexed'..?..
 
@@ -40,11 +46,11 @@ func (n *Hashify) Hash(blank func() hash.Hash) hash.Hash {
 	if m, ok := n.What.(*trie_easy.Node16) ; ok {
 		h := make([]hash.Hash, 8, 8)  // Note: can be done with less memory.
 		for i := 0 ; i < 16 ; i += 2 {
-			h[i/2] = merkle.H_2(Hash(&m.Sub[i], blank), Hash(&m.Sub[i+1], blank))
+			h[i/2] = H_2(Hash(&m.Sub[i], blank), Hash(&m.Sub[i+1], blank), blank)
 		}
-		for i := 0 ; i < 8; i += 2   { h[i/2] = merkle.H_2(h[i], h[i+1]) }
-		for i := 0 ; i < 4 ; i += 2  { h[i/2] = merkle.H_2(h[i], h[i+1]) }
-		n.H	= merkle.H_2(h[0], h[1])
+		for i := 0 ; i < 8; i += 2   { h[i/2] = H_2(h[i], h[i+1], blank) }
+		for i := 0 ; i < 4 ; i += 2  { h[i/2] = H_2(h[i], h[i+1], blank) }
+		n.H	= H_2(h[0], h[1], blank)
 		n.H.Write(getBytes(m.Data))
 		return n.H
 	}
@@ -63,7 +69,7 @@ func (n *Hashify) HashPath(str []byte, blank func() hash.Hash) []hash.Hash {
 	path, i := (&trie_easy.Trie{n}).DownPath(str, int64(0), false)
 	if i != 2*int64(len(str)) { return []hash.Hash{} } // Data not in there.
 
-	hpath := []hash.Hash{}
+	hpath := make([]hash.Hash, len(path))
 	for _, el := range path {
 		hpath = append(hpath, el.Actual.(HashTrieInterface).Hash(blank))
 	}
