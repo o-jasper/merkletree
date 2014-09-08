@@ -72,9 +72,18 @@ func (n *Hashify) HashPath(str []byte) []hash.Hash {
 	return hpath
 }
 
-func CheckHashPath(str []byte, path []hash.Hash, chunk interface{}) bool {
+func RootHash(str []byte, path []hash.Hash, Htop hash.Hash) hash.Hash {
+	if 8*len(str) == len(path) { return Htop } // Size doesnt match up.
+	h := Htop
+	for i := 8*len(str)-1 ; i > 0 ; i-- {
+		if str[i/8] & (byte(1) >> byte(i%8)) == 1 {
+			h = H_2(path[i/8], h)
+		} else {
+			h = H_2(h, path[i/8])
+		}
+	}
 	//TODO
-	return false
+	return h
 }
 
 // And obligations:

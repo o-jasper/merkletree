@@ -63,10 +63,20 @@ func H_U2(h1, h2 hash.Hash) hash.Hash {
 	}
 	return h_out
 }
-
+// .. orderedly.
 func H_2(a, b hash.Hash) hash.Hash {
 	h := ContinueUse(a)
 	h.Write(a.Sum([]byte{}))
 	h.Write(b.Sum([]byte{}))
 	return h
+}
+
+func byteSliceEqual(a []byte, b []byte) bool {
+	if len(a) != len(b) { return false }
+	for i := range a { if a[i] != b[i] { return false } }
+	return true
+}
+
+func HashEqual(a hash.Hash, b hash.Hash) bool {
+	return byteSliceEqual(a.Sum([]byte{}), b.Sum([]byte{}))
 }
