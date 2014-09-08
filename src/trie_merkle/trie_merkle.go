@@ -3,7 +3,8 @@ package trie_merkle
 import (
 	"trie_easy"
 	"hash"
-//	"fmt"
+	"merkle"
+	"fmt"
 )
 
 type HashTrieInterface interface {
@@ -16,36 +17,41 @@ type Hashify struct {
 	H hash.Hash
 }
 
-func Hash(of trie_easy.TrieInterface, blank func() hash.Hash) hash.Hash {
-	if got, is_hash := of.(HashTrieInterface) ; is_hash {
-		return got.Hash(blank)  //Already of correct interface.
-	} else { // Need to give it an interface first.
-		return (&Hashify{of, nil}).Hash(blank)
-	}
+func Hash(sub *trie_easy.Trie, blank func() hash.Hash) hash.Hash {
+	if sub.Actual == nil { return blank() }
+
+	if iface, yep := sub.Actual.(HashTrieInterface) ; yep {
+		return iface.Hash(blank)
+	} else if iface, yep := sub.Actual.(trie_easy.TrieInterface) ; yep {
+		sub.Actual = &Hashify{iface, nil}
+		return sub.Actual.(*Hashify).Hash(blank)
+	} else { panic("This doesnt have the interface it should.") }
 }
-//TODO need paths.
 
 // Returns hashes of things.
 func (n *Hashify) Hash(blank func() hash.Hash) hash.Hash {
 	if n.H != nil { return n.H } // Already got it.
-	n.H = blank()
-	h_nothing := blank().Sum([]byte{})
-
 	// TODO kindah limited doing these one by one.
 
+	if n.What == nil { panic("Hashify may not have nil item") }
 	if m, ok := n.What.(*trie_easy.Node16) ; ok {
-		for _, sub := range m.Sub { //TODO not acceptable.(15 per time instead of 4)
-			if sub.Actual == nil {
-				n.H.Write(h_nothing)
-			} else if iface, yep := sub.Actual.(HashTrieInterface) ; yep {
-				n.H.Write(iface.Hash(blank).Sum([]byte{}))
-			} else if iface, yep := sub.Actual.(trie_easy.TrieInterface) ; yep {
-				sub.Actual = Hashify{iface, nil}
-			} else { panic("This doesnt have the interface it should.") }
+		h := make([]hash.Hash, 8, 8)  // Note: can be done with less memory.
+		for i := 0 ; i < 16 ; i += 2 {
+			h[i/2] = merkle.H_2(Hash(&m.Sub[i], blank), Hash(&m.Sub[i+1], blank))
 		}
+		for i := 0 ; i < 8; i += 2   { h[i/2] = merkle.H_2(h[i], h[i+1]) }
+		for i := 0 ; i < 4 ; i += 2  { h[i/2] = merkle.H_2(h[i], h[i+1]) }
+		n.H	= merkle.H_2(h[0], h[1])
 		n.H.Write(getBytes(m.Data))
 		return n.H
 	}
+	if m, ok := n.What.(trie_easy.DataNode) ; ok {
+		n.H = blank()
+		n.H.Write(getBytes(m.Data))
+		return n.H
+	}
+	got, ok := n.What.(trie_easy.TrieInterface)
+	fmt.Println(n.What, ok, got)
 	panic("Unidentified type")
 	return blank()
 }

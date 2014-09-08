@@ -4,7 +4,7 @@ default: test build
 clean:
 	rm test_merkletree path_chunk_n_root merkletree.so
 
-test: test_merkle test_signed test_pubkey test_signed_negative
+test: test_merkle test_signed test_pubkey test_signed_negative test_trie
 
 test_merkle:
 	GOPATH=`pwd` go run src/test_merkletree.go
@@ -19,7 +19,11 @@ test_pubkey:
 	GOPATH=`pwd` go run src/test_pubkey.go
 
 test_trie:
-	GOPATH=`pwd` go run src/test_trie_easy.go
+	GOPATH=`pwd` go run src/test_trie.go
+
+test_trie_merkle:
+	echo TODO
+# GOPATH=`pwd` go run src/test_trie_easy.go
 
 data:
 	GOPATH=`pwd` go run src/path_chunk_n_root.go

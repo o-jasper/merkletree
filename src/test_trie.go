@@ -11,7 +11,8 @@ import (
 
 	"time"
 
-//	"trie_merkle"
+	"trie_merkle"
+	"crypto/sha256"
 )
 
 func main() {
@@ -64,5 +65,6 @@ func main() {
 			fmt.Println("Got something extra:", val)
 		}
 	}
-	//fmt.Print("= And lack of presence") //TODO
+
+	fmt.Println(test_common.HashStr(trie_merkle.Hash(&node, sha256.New)))
 }
