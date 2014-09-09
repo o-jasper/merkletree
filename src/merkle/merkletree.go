@@ -3,6 +3,7 @@ package merkle
 
 import "hash"
 import . "hash_extra"
+import . "merkle/merkle_common"
 
 // Note.. for instances of hash.Hash i am relying on copy-value..
 // _seems_ like the spec is unclear on this? (not read enough)
@@ -85,7 +86,7 @@ func (gen *MerkleTreeGen) AddChunk(leaf []byte, interest bool) *MerkleNode {
 	h := gen.Hash
 	h.Reset()
 	if gen.IncludeIndex {
-		h.Write(getBytes(gen.I))
+		h.Write(GetBytes(gen.I))
 	}
 	h.Write(leaf)
 	return gen.AddChunkH(h, interest)
@@ -159,7 +160,7 @@ func (node* MerkleNode) VerifyH(Hroot, Hleaf hash.Hash) int8 {
 func h_wi(basis hash.Hash, i uint64, data []byte) hash.Hash {
 	h := basis
 	h.Reset()
-	h.Write(getBytes(i))
+	h.Write(GetBytes(i))
 	h.Write(data)
 	return h
 }

@@ -1,11 +1,11 @@
-package merkle
+package merkle_common
 
 import (
 	"encoding/gob"
 	"bytes"
 )
 
-func getBytes(key interface{}) []byte {
+func GetBytes(key interface{}) []byte {
 	buf := bytes.Buffer{}
 	gob.NewEncoder(&buf).Encode(key)
 	return buf.Bytes()
