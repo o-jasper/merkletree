@@ -156,13 +156,6 @@ func (node* MerkleNode) VerifyH(Hroot, Hleaf hash.Hash) int8 {
 	}
 }
 
-func h(basis hash.Hash, data []byte) hash.Hash {
-	h := basis
-	h.Reset()
-	h.Write(data)
-	return h
-}
-
 func h_wi(basis hash.Hash, i uint64, data []byte) hash.Hash {
 	h := basis
 	h.Reset()
@@ -172,7 +165,7 @@ func h_wi(basis hash.Hash, i uint64, data []byte) hash.Hash {
 }
 
 func (node* MerkleNode) Verify(Hroot hash.Hash, leaf []byte) int8 {
-	return node.VerifyH(Hroot, h(Hroot, leaf))
+	return node.VerifyH(Hroot, H(Hroot, leaf))
 }
 
 func (node* MerkleNode) VerifyWithIndex(Hroot hash.Hash, i uint64, leaf []byte) int8 {
@@ -216,7 +209,7 @@ func VerifyH(root, Hleaf hash.Hash, path []hash.Hash) bool {
 	return HashEqual(ExpectedRoot(Hleaf, path), root)
 }
 func Verify(root hash.Hash, leaf []byte, path []hash.Hash) bool {
-	return VerifyH(root, h(root, leaf), path)
+	return VerifyH(root, H(root, leaf), path)
 }
 func VerifyWithIndex(root hash.Hash, i uint64, leaf []byte, path []hash.Hash) bool {
 	return VerifyH(root, h_wi(root, i, leaf), path)

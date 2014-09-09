@@ -49,6 +49,12 @@ func greater(x []byte, y []byte) bool {
 	return true
 }
 
+func H(h hash.Hash, input []byte) hash.Hash {
+	h.Reset()
+	h.Write(input)
+	return h
+}
+
 // Combine pair of hashes unorderedly.
 func H_U2(h1, h2 hash.Hash) hash.Hash {
 	d1, d2 := h1.Sum([]byte{}), h2.Sum([]byte{})
