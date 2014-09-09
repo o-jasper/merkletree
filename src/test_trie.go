@@ -13,6 +13,8 @@ import (
 
 	"trie_merkle"
 	"crypto/sha256"
+
+	"hash"
 )
 
 func main() {
@@ -22,8 +24,9 @@ func main() {
 	flag.Int64Var(&n_min, "n_min", 0, "Minimum length of random chunk.")
 	flag.Int64Var(&n_max, "n_max", 64, "Maximum length of random chunk.")
 	flag.Int64Var(&N, "N", 80, "Number of entries.")
-	var print bool
+	var print, merkle bool
 	flag.BoolVar(&print, "print", false, "Whether to print everything")
+	flag.BoolVar(&merkle, "merkle", true, "Whether to do the merkle part")
 
 	node := trie_easy.NewTrie(nil)
 	compare := map[string]int64{}
@@ -44,7 +47,14 @@ func main() {
 			return false
 		})
 	}
-	fmt.Println("= And check equality.")
+	var root hash.Hash
+	if merkle { 
+		fmt.Println("= Check equality, and verification through path.")
+		root = trie_merkle.Hash(&node, sha256.New())
+		fmt.Println("= Got root", test_common.HashStr(root))
+	} else {
+		fmt.Println("= And check equality.")
+	}
 	for k,v := range compare {
 		val := node.Get([]byte(k), 0)
 		if val != v {
@@ -65,6 +75,4 @@ func main() {
 			fmt.Println("Got something extra:", val)
 		}
 	}
-
-	fmt.Println(test_common.HashStr(trie_merkle.Hash(&node, sha256.New())))
 }
