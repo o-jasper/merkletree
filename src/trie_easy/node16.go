@@ -7,14 +7,12 @@ type Node16 struct {
 
 func NewNode16(data interface{}) *Node16 {
 	t := Node16{Data:data}
-	for i := 0 ; i < 16 ; i++ {
-		t.Sub[i].Actual = nil
-	}
+	for i := 0 ; i < 16 ; i++ { t.Sub[i].Actual = nil }
 	return &t
 }
 
 func (n *Node16) Down1(str []byte, i int64, _ bool) *Trie {
-	return &n.Sub[nibble(str, i)]
+	return &n.Sub[Nibble(str, i)]
 }
 
 func (n *Node16) Get(str []byte, i int64) interface{} {
@@ -28,10 +26,10 @@ func (n* Node16) SetRaw(str []byte, i int64, to interface{}, c TrieCreator) Trie
 		n.Data = to
 		return n
 	}
-	if n.Sub[nibble(str,i)].Actual != nil {
+	if n.Sub[Nibble(str,i)].Actual != nil {
 		panic("Not far downward enough!?!")
 	}
-	n.Sub[nibble(str,i)].Actual = c.Extend(str, i+1, DataNode{Data:to})
+	n.Sub[Nibble(str,i)].Actual = c.Extend(str, i+1, DataNode{Data:to})
 	return n
 }
 
@@ -58,10 +56,10 @@ func (_ Creator16) Extend(str []byte, i int64, final TrieInterface) interface{} 
 	m := first
 	for i < 2*int64(len(str)) - 1 {
 		n := NewNode16(nil)
-		m.Sub[nibble(str,i)].Actual = n
+		m.Sub[Nibble(str,i)].Actual = n
 		m = n
 		i += 1
 	}
-	m.Sub[nibble(str,i)].Actual = final
+	m.Sub[Nibble(str,i)].Actual = final
 	return first
 }

@@ -7,6 +7,7 @@ import (
 	"trie_easy"
 
 	"merkle/test_common"
+	"merkle/merkle_common"
 	"encoding/hex"
 
 	"time"
@@ -15,6 +16,7 @@ import (
 	"crypto/sha256"
 
 	"hash"
+	"hash_extra"
 )
 
 func main() {
@@ -53,6 +55,7 @@ func main() {
 		root = trie_merkle.Hash(&node, sha256.New())
 		fmt.Println("= Got root", test_common.HashStr(root))
 	} else {
+		root = nil
 		fmt.Println("= And check equality.")
 	}
 	for k,v := range compare {
@@ -60,6 +63,16 @@ func main() {
 		if val != v {
 			fmt.Println("Mismatch on:", hex.EncodeToString([]byte(k)),":", v, "vs", val)
 		}
+		if merkle { // Run the test.
+			// TODO
+			str := []byte(k)
+			_, _, path := trie_merkle.HashPath(&node, str, sha256.New())
+			h := hash_extra.H(sha256.New(), merkle_common.GetBytes(v))
+			if !trie_merkle.VerifyH(str, path, h, root) {
+				fmt.Println("Verification didnt work.")
+			}
+			// TODO also, try against false positives.
+		} 	
 	}
 	fmt.Println("= Try against false positives.")
 	for i := int64(0) ; i < N ; i++ {

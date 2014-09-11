@@ -2,7 +2,7 @@ package trie_merkle
 
 import (
 	"hash"
-	"fmt"
+//	"fmt"
 )
 import . "trie_easy"
 import . "hash_extra"
@@ -12,13 +12,19 @@ import . "hash_extra"
 type HashTrieInterface interface {
 	TrieInterface
 	Hash() hash.Hash
-	HashPath() hash.Hash
+	HashDown1(str []byte, i int64, list *[]hash.Hash) *Trie
 }
 
-type Hashify struct {
-	What TrieInterface
-	H hash.Hash
-	Changed bool
+func Hashify(input interface{}, blank hash.Hash) HashTrieInterface {
+	switch input.(type) {
+	case *Node16:
+		return &MT16{*input.(*Node16), false, blank,
+			[8]hash.Hash{}, [4]hash.Hash{}, [2]hash.Hash{}}
+	case *DataNode:
+		return &MTData{*input.(*DataNode), blank}
+	}
+	panic("")
+	return nil
 }
 
 func Hash(sub *Trie, blank hash.Hash) hash.Hash {
@@ -27,75 +33,48 @@ func Hash(sub *Trie, blank hash.Hash) hash.Hash {
 	if iface, yep := sub.Actual.(HashTrieInterface) ; yep {
 		return iface.Hash()
 	} else if iface, yep := sub.Actual.(TrieInterface) ; yep {
-		sub.Actual = &Hashify{iface, blank, true}
-		return sub.Actual.(*Hashify).Hash()
+		sub.Actual = Hashify(iface, blank)
+		return sub.Actual.(HashTrieInterface).Hash()
 	} else { panic("This doesnt have the interface it should.") }
 }
 
-// Returns hashes of things.
-func (n *Hashify) Hash() hash.Hash {
-	if !n.Changed { return n.H } // Already got it.
-	// TODO kindah limited doing these one by one.
-
-	blank := ContinueUse(n.H)
-	if n.What == nil { panic("Hashify may not have nil item") }
-	if m, ok := n.What.(*Node16) ; ok {
-		h := make([]hash.Hash, 8, 8)  // Note: can be done with less memory.
-		for i := 0 ; i < 16 ; i += 2 {
-			h[i/2] = H_2(Hash(&m.Sub[i], blank), Hash(&m.Sub[i+1], blank))
+// Go down as far as possible, making a merkle path.
+// NOTE: code pretty much the same as Downward
+func HashPath(n *Trie, str []byte, blank hash.Hash) (*Trie, int64, []hash.Hash) {
+	i := int64(0)
+	if n.Actual == nil { return n, i, []hash.Hash{} }
+	path, m := []hash.Hash{}, n
+	for i < 2*int64(len(str)) {
+		if m == nil || m.Actual == nil { return n, i - 1, path }
+		n = m
+		iface, ok := m.Actual.(HashTrieInterface)
+		if !ok {
+			Hash(m, blank)
+			iface = m.Actual.(HashTrieInterface)
 		}
-		for i := 0 ; i < 8; i += 2   { h[i/2] = H_2(h[i], h[i+1]) }
-		for i := 0 ; i < 4 ; i += 2  { h[i/2] = H_2(h[i], h[i+1]) }
-		n.H	= H_2(h[0], h[1])
-		n.H.Write(getBytes(m.Data))
-		return n.H
+		m = iface.HashDown1(str, i, &path)
+		i += 1
 	}
-	if m, ok := n.What.(DataNode) ; ok {
-		n.H = blank
-		n.H.Write(getBytes(m.Data))
-		return n.H
-	}
-	got, ok := n.What.(TrieInterface)
-	fmt.Println(n.What, ok, got)
-	panic("Unidentified type")
-	return blank
+	return m, i, path
 }
+// Calculating, given data.
 
-func (n *Hashify) HashPath(str []byte) []hash.Hash {
-	path, i := (&Trie{n}).DownPath(str, int64(0), false)
-	if i != 2*int64(len(str)) { return []hash.Hash{} } // Data not in there.
-
-	hpath := make([]hash.Hash, len(path))
-	for _, el := range path {
-		hpath = append(hpath, el.Actual.(HashTrieInterface).Hash())
-	}
-	return hpath
-}
-
-func RootHash(str []byte, path []hash.Hash, Htop hash.Hash) hash.Hash {
-	if 8*len(str) == len(path) { return Htop } // Size doesnt match up.
-	h := Htop
-	for i := 8*len(str)-1 ; i > 0 ; i-- {
+func RootHashH(str []byte, path []hash.Hash, Hleaf hash.Hash) hash.Hash {
+	if 8*len(str) != len(path) { return Hleaf } // Size doesnt match up.
+	h := Hleaf
+	for i := 8*(len(str)-1) ; i > 0 ; i-- {
 		if str[i/8] & (byte(1) >> byte(i%8)) == 1 {
 			h = H_2(path[i/8], h)
 		} else {
 			h = H_2(h, path[i/8])
 		}
 	}
-	//TODO
 	return h
 }
-
-// And obligations:
-func (n *Hashify) Down1(str []byte, i int64, change bool) *Trie {
-	if change { n.Changed = true }
-	return n.What.Down1(str, i, change)
+func VerifyH(str []byte, path []hash.Hash, Hleaf, root hash.Hash) bool {
+	return HashEqual(RootHashH(str, path, Hleaf), root)
+}
+func Verify(str []byte, path []hash.Hash, leafchunk []byte, root hash.Hash) bool {
+	return VerifyH(str, path, H(root, leafchunk), root)
 }
 
-func (n *Hashify) SetRaw(str []byte, i int64, to interface{}, c TrieCreator) TrieInterface {
-	return n.What.SetRaw(str, i, to, c)
-}
-
-func (n* Hashify) MapAll(data interface{}, pre []byte, odd bool, fun MapFun) bool {
-	return n.What.MapAll(data, pre, odd, fun)
-}
