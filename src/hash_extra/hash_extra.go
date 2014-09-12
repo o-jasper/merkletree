@@ -1,45 +1,13 @@
 package hash_extra
 
-import (
-	"hash"
-)
+import "hash"
 
-// Allows you to create a hash.Hash with just a result in it.
-//
-// The hash standard library fails to deliver a bit on this area..
+type HashResult []byte
+type Hasher struct { hash.Hash }
 
-type HashResult struct {
-	Result []byte
-	Continue hash.Hash
-}
-
-//(for easier path converting)
-func HashResultList(input [][]byte, cont hash.Hash) []hash.Hash {
-	ret := []hash.Hash{}
-	for _, el := range input { ret = append(ret, HashResult{el, cont}) }
-	return ret
-}
-
-func (hr HashResult) Sum(b []byte) []byte {
-	if len(b) != 0 { panic("This is a dud hash.Hash intended only for result!") }
-	return hr.Result
-}
-
-func (hr HashResult) Reset() { panic("This is a dud hash.Hash") }
-func (hr HashResult) Size() int { return len(hr.Result) }
-func (hr HashResult) BlockSize() int { panic("This is a dud hash.Hash") }
-func (hr HashResult) Write(_ []byte) (_ int, _ error){ panic("This is a dud hash.Hash") }
-
-func ContinueUse(input hash.Hash) hash.Hash {
-	if hr, yes := input.(HashResult) ; yes { return hr.Continue }
-	if input == nil { panic("Problem, dont have a hash!") }
-	input.Reset()
-	return input
-}
-
-//
 func greater(x []byte, y []byte) bool {
 	if len(x) != len(y) { 
+		print(len(x), ",", len(y), "\n")
 		panic("Unequal sized integer comparison (probably different hash interface types)")
 	}
 	for i := range x {
@@ -49,40 +17,73 @@ func greater(x []byte, y []byte) bool {
 	return true
 }
 
-func H(h hash.Hash, input []byte) hash.Hash {
-	h.Reset()
-	h.Write(input)
-	return h
+func (hasher Hasher) rw(input []byte) {	// Reset, then write.
+	hasher.Reset()
+	hasher.Write(input)
+}
+
+func (hasher Hasher) S() HashResult { // Current sum.
+	return hasher.Sum([]byte{})
+}
+
+func (hasher Hasher) H(input []byte) HashResult {
+	hasher.rw(input)
+	return hasher.S()
+}
+func (hasher Hasher) HwI(i uint64, data []byte) HashResult {
+	hasher.Reset()
+	for j := 0 ; j < 8 ; j ++ {
+		hasher.Write([]byte{byte(i/72057594037927936)})
+		i *= 256
+	}
+	hasher.Write(data)
+	return hasher.S()
 }
 
 // Combine pair of hashes unorderedly.
-func H_U2(h1, h2 hash.Hash) hash.Hash {
-	d1, d2 := h1.Sum([]byte{}), h2.Sum([]byte{})
-	h_out := ContinueUse(h1)
-	h_out.Reset()
-	if greater(d1, d2) {
-		h_out.Write(d1)
-		h_out.Write(d2)
+func (hasher Hasher) H_U2(h1, h2 HashResult) HashResult {
+	if greater(h1, h2) {
+		hasher.rw(h1)
+		hasher.Write(h2)
+		return hasher.S()
 	} else {
-		h_out.Write(d2)
-		h_out.Write(d1)
+		hasher.rw(h2)
+		hasher.Write(h1)
+		return hasher.S()
 	}
-	return h_out
 }
 // .. orderedly.
-func H_2(a, b hash.Hash) hash.Hash {
-	h := ContinueUse(a)
-	h.Write(a.Sum([]byte{}))
-	h.Write(b.Sum([]byte{}))
-	return h
+func (hasher Hasher) H_2(a, b HashResult) HashResult {
+	hasher.rw(a)
+	hasher.Write(b)
+	return hasher.S()
 }
 
-func byteSliceEqual(a []byte, b []byte) bool {
+func ByteSliceEqual(a []byte, b []byte) bool {
 	if len(a) != len(b) { return false }
 	for i := range a { if a[i] != b[i] { return false } }
 	return true
 }
 
-func HashEqual(a hash.Hash, b hash.Hash) bool {
-	return byteSliceEqual(a.Sum([]byte{}), b.Sum([]byte{}))
+func HashEqual(a HashResult, b HashResult) bool {
+	return ByteSliceEqual(a, b)
+}
+
+//Calculate expected root, given the path.
+func (hasher Hasher) MerkleExpectedRoot(H_leaf HashResult, path []HashResult) HashResult {
+	x := H_leaf
+	for _, el := range path {	x = hasher.H_U2(el, x) }
+	return x
+}
+
+//Checks a root.
+func (hasher Hasher) MerkleVerifyH(root, Hleaf HashResult, path []HashResult) bool {
+	return HashEqual(hasher.MerkleExpectedRoot(Hleaf, path), root)
+}
+func (hasher Hasher) MerkleVerify(root HashResult, leaf []byte, path []HashResult) bool {
+	return hasher.MerkleVerifyH(root, hasher.H(leaf), path)
+}
+
+func (hasher Hasher) MerkleVerifyWithIndex(root HashResult, i uint64, leaf []byte, path []HashResult) bool {
+	return hasher.MerkleVerifyH(root, hasher.HwI(i, leaf), path)
 }

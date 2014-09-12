@@ -6,12 +6,12 @@ import (
 	"math/rand"
 	"crypto/sha256"
 
-	"time"
+//	"time"
 
 	"merkle"
 	"merkle/test_common"
 
-	"hash"
+	"hash_extra"
 )
 
 //Add a `N` chunks and lists the tree leaves. `incp` is the probability of
@@ -20,12 +20,12 @@ func main() {
 
 //Read settings portion.
 	var seed, n_min, n_max, N int64
-	flag.Int64Var(&seed, "seed", time.Now().UnixNano(), "Random seed for test.")
+	flag.Int64Var(&seed, "seed", 1/*time.Now().UnixNano()*/, "Random seed for test.")
 	flag.Int64Var(&n_min, "n_min", 1, "Minimum length of random chunk.")
 	flag.Int64Var(&n_max, "n_max", 256, "Maximum length of random chunk.")
-	flag.Int64Var(&N, "N", 256, "Number of chunks.")
+	flag.Int64Var(&N, "N", 8/*256*/, "Number of chunks.")
 	var incp float64
-	flag.Float64Var(&incp, "incp", 0.3, "Probability of including to check.")
+	flag.Float64Var(&incp, "incp", 1, "Probability of including to check.")
 	var with_index bool 
 	flag.BoolVar(&with_index, "with_index", true, "Wether to have an index in each chunk")
 	flag.Parse()
@@ -35,13 +35,14 @@ func main() {
 	fmt.Println("Seed:", seed)
 	r := rand.New(rand.NewSource(seed))
 
-	gen := merkle.NewMerkleTreeGen(sha256.New(), with_index)  //Put chunks in.
+	hasher := hash_extra.Hasher{sha256.New()}
+	gen := merkle.NewMerkleTreeGen(hasher, with_index)  //Put chunks in.
 	list := []*merkle.MerkleNode{}
 	included := []bool{}
 	for i:= int64(0) ; i < N ; i++ {
 		chunk := test_common.Rand_chunk(r, n_min, n_max)
 		include_this := (rand.Float64() <= incp)
-		list = append(list, gen.AddChunk(chunk, include_this))
+		list = append(list, gen.Add(chunk, include_this))
 		included = append(included, include_this)
 	}
 	roothash := gen.Finish().Hash  //Get the root hash.
@@ -53,19 +54,22 @@ func main() {
 	j, r2, ll := 0, rand.New(rand.NewSource(seed + 1)), 0
 	for i := int64(0) ; i < N ; i++ {
 		chunk := test_common.Rand_chunk(r, n_min, n_max)  // Recreates exactly as it was.
-		root, valid := list[i].IsValid(-1)
+		root, valid := list[i].IsValid(hasher, -1)
 		switch {
 		case !valid:
+//			fmt.Println(test_common.HashStr(root.Left.Hash), test_common.HashStr(root.Right.Hash))
+//			fmt.Println(test_common.HashStr(root.Hash), test_common.HashStr(hasher.H_U2(root.Right.Hash, root.Left.Hash)))
 			fmt.Println("Merkle tree not valid internally.")
-		case !list[i].CorrespondsToChunk(chunk):
+			
+		case with_index && !list[i].CorrespondsWithIndex(uint64(i), chunk, hasher) || !with_index && !list[i].Corresponds(chunk, hasher):
 			fmt.Println("Chunk", i , "didnt check out.")
-		case !root.CorrespondsToHash(roothash):
-			fmt.Println("Not the correct top.", 
-				test_common.HashStr(roothash), test_common.HashStr(root.Hash))
-		default:
+		case included[i] && !root.CorrespondsH(roothash):
+			fmt.Println("Not the correct top.", root.Up)
+//				test_common.HashStr(roothash), test_common.HashStr(root.Hash))
+		case included[i]:
 			var r int8
-			if with_index { r = list[i].VerifyWithIndex(roothash, uint64(i), chunk)
-			}	else { r = list[i].Verify(roothash, chunk) }
+			if with_index { r = list[i].VerifyWithIndex(hasher, roothash, uint64(i), chunk)
+			}	else { r = list[i].Verify(hasher, roothash, chunk) }
 			if r != merkle.Correct {
 				fmt.Println("Everything checked out but Verify didnt?", r)
 			}
@@ -74,12 +78,14 @@ func main() {
 		if included[i] {
 			path, success := list[i].Path(), false
 			ll = len(path)
-			if with_index { success = merkle.VerifyWithIndex(roothash, uint64(i), chunk, path)
-			} else { success = merkle.Verify(roothash, chunk, path) }
+			if with_index { 
+				success = hasher.MerkleVerifyWithIndex(roothash, uint64(i), chunk, path)
+			} else { success = hasher.MerkleVerify(roothash, chunk, path) }
 			
 			if !success {
-				fmt.Println(" - One of the Merkle Paths did not check out!")
-				fmt.Println(test_common.HashStr(root.Hash))
+				fmt.Println(" - One of the Merkle Paths did not check out!", ll)
+				fmt.Println(
+					test_common.HashStr(hasher.MerkleExpectedRoot(hasher.HwI(uint64(i), chunk), path)))
 			}
 			j += 1
 		}
@@ -89,13 +95,12 @@ func main() {
 			if r2.Int31() % 2 == 0 {
 				chunk = test_common.Rand_chunk(r2, n_min, n_max)
 			}
-			path := []hash.Hash{}
+			path := []hash_extra.HashResult{}
 			for i := 0 ; i < ll ; i++ {
-				h := sha256.New() //10^-38 of accident, random gen will sooner collide.
-				h.Write(test_common.Rand_bytes(r2, 16))
-				path = append(path, h)
+				//10^-38 of accident, random gen will sooner collide.
+				path = append(path, hasher.H(test_common.Rand_bytes(r2, 16)))
 			}
-			if merkle.Verify(roothash, chunk, path) {
+			if hasher.MerkleVerify(roothash, chunk, path) {
 				fmt.Println(" - False positive!")
 			}
 		}
