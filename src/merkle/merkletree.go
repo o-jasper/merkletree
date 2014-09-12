@@ -114,10 +114,10 @@ func (node *MerkleNode) IsValid(hasher Hasher, recurse int32) (*MerkleNode, bool
 func (node *MerkleNode) CorrespondsH(h HashResult) bool {
 	return ByteSliceEqual(h, node.Hash)
 }
-func (node *MerkleNode) Corresponds(leaf []byte, hasher Hasher) bool {
+func (node *MerkleNode) Corresponds(hasher Hasher, leaf []byte) bool {
 	return node.CorrespondsH(hasher.H(leaf))
 }
-func (node *MerkleNode) CorrespondsWithIndex(i uint64, leaf []byte, hasher Hasher) bool {
+func (node *MerkleNode) CorrespondsWithIndex(hasher Hasher, i uint64, leaf []byte) bool {
 	return node.CorrespondsH(hasher.HwI(i, leaf))
 }
 

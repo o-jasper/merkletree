@@ -61,7 +61,7 @@ func main() {
 //			fmt.Println(test_common.HashStr(root.Hash), test_common.HashStr(hasher.H_U2(root.Right.Hash, root.Left.Hash)))
 			fmt.Println("Merkle tree not valid internally.")
 			
-		case with_index && !list[i].CorrespondsWithIndex(uint64(i), chunk, hasher) || !with_index && !list[i].Corresponds(chunk, hasher):
+		case with_index && !list[i].CorrespondsWithIndex(hasher, uint64(i), chunk) || !with_index && !list[i].Corresponds(hasher, chunk):
 			fmt.Println("Chunk", i , "didnt check out.")
 		case included[i] && !root.CorrespondsH(roothash):
 			fmt.Println("Not the correct top.", root.Up)
