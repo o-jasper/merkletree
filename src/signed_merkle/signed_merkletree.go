@@ -10,7 +10,7 @@ package signed_merkle
 
 import (
 	"merkle"
-	"hash"
+	"hash_extra"
 )
 
 type Getter interface {
@@ -36,8 +36,8 @@ type SignedMerkleProver struct {
 }
 
 // Adds non-signed chunks.
-func (gen *SignedMerkleProver) AddChunk(chunk []byte) *merkle.MerkleNode {
-	cur := gen.MerkleTreeGen.AddChunk(chunk, true)
+func (gen *SignedMerkleProver) Add(chunk []byte) *merkle.MerkleNode {
+	cur := gen.MerkleTreeGen.Add(chunk, true)
 	gen.Getter.SetNode(gen.N, cur)
 	// Note: It doesnt care how it gets set. If it is set via another way already,
 	//  just make it to do nothing.
@@ -49,23 +49,25 @@ func (gen *SignedMerkleProver) AddChunk(chunk []byte) *merkle.MerkleNode {
 
 // Prepares to prove a chunk, given a nonce and signer.
 func (gen *SignedMerkleProver) AddAllSigned(nonce []byte, signer Signer) (*merkle.MerkleNode, *SignedMerkleProver) {
-	smp := NewSignedMerkleProver(gen.Hash, gen.IncludeIndex)
+	smp := NewSignedMerkleProver(gen.Hasher, gen.IncludeIndex)
 	for smp.N < gen.N {
-		smp.AddChunk(signer.Sign(append(gen.Getter.GetChunk(smp.N), nonce...)))
+		smp.Add(signer.Sign(append(gen.Getter.GetChunk(smp.N), nonce...)))
 	}
 	return smp.Finish(), &smp
 }
 
 // Note: assumes the index and nonce is already at the verifier.
 type SignedMerkleProof struct {
+	Hasher    hash_extra.Hasher
 	node      *merkle.MerkleNode
 	sig_node  *merkle.MerkleNode
 	chunk     []byte
 	sig_chunk []byte
 }
 
-func (gen *SignedMerkleProver) NewSignedMerkleProof_FromIndex(signed *SignedMerkleProver, index int64) SignedMerkleProof {
+func (gen *SignedMerkleProver) NewSignedMerkleProof_FromIndex(hasher hash_extra.Hasher, signed *SignedMerkleProver, index int64) SignedMerkleProof {
 	return SignedMerkleProof{ 
+		Hasher    : hasher,
 		node      : gen.Getter.GetNode(index),
 		sig_node  : signed.Getter.GetNode(index),
 		chunk     : gen.Getter.GetChunk(index),
@@ -74,13 +76,13 @@ func (gen *SignedMerkleProver) NewSignedMerkleProof_FromIndex(signed *SignedMerk
 
 //TODO/NOTE, takes the whole damn chunk & signature.. Or blockchain chunks have
 // to be granular..
-func (proof *SignedMerkleProof) Verify(nonce []byte, pubkey Pubkey, root hash.Hash, sig_root hash.Hash) int8 {
+func (proof *SignedMerkleProof) Verify(nonce []byte, pubkey Pubkey, root, sig_root hash_extra.HashResult) int8 {
 	//Check that the signature applies.
 	if !pubkey.VerifySignature(proof.sig_chunk, append(proof.chunk, nonce...)) {
 		return merkle.WrongSig
 	} else { //Check that the Merkle paths are right.
-		if r := proof.sig_node.Verify(sig_root, proof.sig_chunk) ; r == merkle.Correct {
-			return proof.node.Verify(root, proof.chunk) //It takes over.
+		if r := proof.sig_node.Verify(proof.Hasher, sig_root, proof.sig_chunk) ; r == merkle.Correct {
+			return proof.node.Verify(proof.Hasher, root, proof.chunk) //It takes over.
 		} else { //Makes it the Signature path error version.
 			return r + merkle.Merkletree_NPathWrongs
 		}
@@ -120,7 +122,7 @@ func NewSimpleGetter() SimpleGetter {
 	return SimpleGetter{map[int64]*merkle.MerkleNode{}, map[int64][]byte{}}
 }
 
-func NewSignedMerkleProver(h hash.Hash, include_index bool) SignedMerkleProver {
+func NewSignedMerkleProver(hasher hash_extra.Hasher, include_index bool) SignedMerkleProver {
 	getter := NewSimpleGetter()
-	return SignedMerkleProver{merkle.NewMerkleTreeGen(h, include_index), int64(0), &getter}
+	return SignedMerkleProver{merkle.NewMerkleTreeGen(hasher, include_index), int64(0), &getter}
 }

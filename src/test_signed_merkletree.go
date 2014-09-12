@@ -14,6 +14,7 @@ import (
 	"signed_merkle/signed_merkle_pubkey"
 	
 	"crypto/sha256"
+	"hash_extra"
 )
 
 func main() {
@@ -37,9 +38,10 @@ func main() {
 	fmt.Println("Seed:", seed)
 	r := rand.New(rand.NewSource(seed))
 	
-	gen := signed_merkle.NewSignedMerkleProver(sha256.New(), false)
+	hasher := hash_extra.Hasher{sha256.New()}
+	gen := signed_merkle.NewSignedMerkleProver(hasher, false)
 	for i:= int64(0) ; i < N ; i++ {
-		gen.AddChunk(test_common.Rand_chunk(r, n_min, n_max))
+		gen.Add(test_common.Rand_chunk(r, n_min, n_max))
 	}
 	root := gen.Finish()  //Get the root hash.
 	fmt.Println("")
@@ -69,7 +71,7 @@ func main() {
 			
 			// Create response:(the one that will be tested)
 			// Regular and signature node.
-			proof := gen.NewSignedMerkleProof_FromIndex(smp, j)
+			proof := gen.NewSignedMerkleProof_FromIndex(hasher, smp, j)
 			//Verify it.
 			if !negative {
 				if r := proof.Verify(nonce, pubkey, root.Hash, sigroot.Hash); r != merkle.Correct {
