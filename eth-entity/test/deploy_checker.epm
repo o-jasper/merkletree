@@ -1,7 +1,0 @@
-
-deploy:
-  ../merkle_checker.lll => {{CHECKER}}
-modify-deploy:
-  merkle_checker.lll => {{TESTER}}
-  (def 'checker_fun deployer_var) => (def 'checker_fun {{CHECKER}})
-

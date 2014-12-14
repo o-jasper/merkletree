@@ -1,0 +1,17 @@
+
+// Returns expected merkle root. Left/right determined by size of checksum,
+// (positions have to be 'coded-in')
+
+cur = [msg.data[0], msg.data[0]]
+i = 1
+while i < msg.datasize:
+    if cur[0] < msg.data[i] // Right.
+        cur[1] = msg.data[i]
+        cur[0] = sha3(cur, 2)
+    else: // Left.
+        cur[1] = cur[0]
+        cur[0] = msg.data[i]
+        cur[0] = sha3(cur, 2)
+    i = i + 1 // Bit unusual, but want last one separately.
+
+return(cur[0])

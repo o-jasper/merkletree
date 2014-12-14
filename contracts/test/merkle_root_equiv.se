@@ -1,0 +1,18 @@
+
+// Equivalent slower version.
+
+cur = msg.data[0]
+list = array(2)
+i = 1
+while i < msg.datasize:
+    if cur < msg.data[i] // Right.
+        list[0] = cur
+        list[1] = msg.data[i]
+        cur = sha3(list, 2)
+    else: // Left.
+        list[0] = msg.data[i]
+        list[1] = cur
+        cur = sha3(list, 2)
+    i = i + 1 // Bit unusual, but want last one separately.
+
+return(cur)
