@@ -9,14 +9,14 @@ def eth_num(x):  # TODO wrong way around? (should be fixing t.sha3?)
 def eth_lt(x,y):
     return x < y if x < 2**255 else x > y
 
+def h2(x, y):
+    return t.sha3([x,y] if eth_lt(x, y) else [y,x])
+
 # Root from a path.
-def path_root(sides):
+def path_w_root(sides):
     cur = sides[0]
     for el in sides[1:]:
-        if eth_lt(cur, el):  # Right.. negatives in VM, apparently?
-            cur = t.sha3([cur, el])
-        else:
-            cur = t.sha3([el, cur])
+        cur = h2(cur,el)
     return cur
 
 # Element for moving root, with option of indicating interest(or lack)
@@ -31,22 +31,22 @@ class Element:
         if self.interest == True:  # End of the line.
             return [self]
         else:
-            return [self] + self.interest.path()
+            return [self] + self.interest.el_path()
 
     def path(self):
-        return map(lambda(el):el.H, self.el_path)
+        return map(lambda(el):el.H, self.el_path())
 
 
 # Moving root.
 class MovingRoot:
     def __init__(self, _list=None):
-        self.list = [] if _list else _list  # List of top-depth pairs.
+        self.list = ([] if _list is None else _list)  # List of top-depth pairs.
 
     def copy(self):
         return MovingRoot(self.list)
 
     def incorporate(self, chunk, interest=False):
-        return self.incorporate_H(t.sha3(chunk, interest))
+        return self.incorporate_H(t.sha3(chunk), interest)
 
     def incorporate_H(self, H, interest=False):
         el = Element(H, 1, interest)
@@ -63,7 +63,7 @@ class MovingRoot:
                 return
             # Combine equal depth tree tops.
             self.list = self.list[:-2]
-            el = Element(t.sha3([last[0], prelast[0]]), last.depth + 1,
+            el = Element(h2(last.H, prelast.H), last.depth + 1,\
                          last.interest or prelast.interest)
             self.list.append(el)
             if last.interest:  # Refer on if interested.
@@ -76,7 +76,7 @@ class MovingRoot:
         if dont_change:
             return self.copy().finalize()
         
-        assert len(self.list > 0)
+        assert len(self.list) > 0
         self.simplify(True)
         assert len(self.list) == 1
-        return self.list[0][0]
+        return self.list[0].H
