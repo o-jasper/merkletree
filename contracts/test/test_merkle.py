@@ -23,10 +23,9 @@ def test_path(path, expect_root=None):
     root = path_w_root(path)
     if expect_root is not None:
         assert root == expect_root
-    r = s.send(t.k0,  c, 0, path)
-    r2 = s.send(t.k0, c2, 0, path)
-    assert len(r) == 1 and len(r2) == 1
-    assert eth_num(r[0]) == root and eth_num(r2[0]) == root
+    r = s.send(t.k0,  c if random()<0.5 else c2, 0, path)
+    assert len(r) == 1
+    assert eth_num(r[0]) == root
 
 def test_random_interest(n, interest_p=0.5, simulate_p=None, m=6):
     if simulate_p is None:
