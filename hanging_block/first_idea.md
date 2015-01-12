@@ -31,16 +31,32 @@ contract emulates `sstore`/`sload`. When all is said and done, it compares the
 Patricia-proven end state value with the value at the end of running the contract.
 
 If indeed wrong, the HB invalidates the block and subsequent blocks.(auch)
-If correct, nothing happens.
+If correct, nothing happens. (Of course this can be simulated)
 
 ### Problems
 
-* The accessed state might be large, making proving it wrong too expensive.
-* `sstore`-ing a lot for state is costly.
-* `call`ing emulating `sstore` is costly, and it needs to emulate storage over
+1. The accessed state might be large, making proving it wrong too expensive.
+2. `sstore`-ing a lot for state is costly.
+3. `call`ing emulating `sstore` is costly, and it needs to emulate storage over
   multiple contracts.(more costly yet)
+4. Still need to figure out how to have multiple instances of a contract on the
+  HB? How does calling other contracts work?
 
-## Maybe different?
+## Other approaches?
 Maybe a solution is to really compile checking code right into the
-Ethereum-HB-end, and have the HB program fuddles out the contract it needs to
-use on its end.
+Ethereum-HB-end. HB program needs to get at the contract -as-it-runs there
+aswel though.
+
+(4) can be solved:
+
+1. Simply not have them.. Each on-HB contract corresponds to one on-Ethereum.
+    
+   Monoliths that store the process of multiple.(not very handy sometimes..)
+2. Mess with code more complicatedly, also altering `address`, messing with
+   `calldataload` to stuff in the address somewhere, messing with `call` to
+   correspond aswel.
+
+Perhaps (3) can be solved, by converting the `sstore`/`sload`s locally
+in-contract to specify the actual contract, and adding some extra
+functionality allowing the HB contract to look at the relevant value
+afterward.
