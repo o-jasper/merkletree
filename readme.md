@@ -97,3 +97,5 @@ Returns what the root is *expected* to be.
 
 * The above docs could look better.
 * Negative result tests.
+
+* What the hell is `src/bin/path_chunk_n_root.go` for?

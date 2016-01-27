@@ -13,6 +13,8 @@ import (
 )
 
 //Returns:
+// TODO wtf is it for?
+
 // * chunk itself
 // * chunk hash
 // * path
