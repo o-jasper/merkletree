@@ -17,7 +17,7 @@ end
 function This:init()
    assert(self.H,
           "Need a pair hash function! Can use Class:class_pairify to use a hash")
-   if not self.H2 then self.H2 = This:class_pairify() end
+   if not self.H2 then self.H2 = self:class_pairify() end
 end
 
 function This:class_pairify(H)
@@ -31,17 +31,27 @@ function This:class_pairify(H)
    end
 end
 
-function This:verify_H(root, list, leaf)
+function This:expect_root(proof, leaf)
    assert(self.H)
-   return self:verify_H(root, list, self.H(leaf))
+   return self:expect_root_H(proof, self.H(leaf))
 end
 
-function This:verify_H(root, list, leaf_H)
+function This:expect_root_H(proof, leaf_H)
    local cur_H = leaf_H
-   for _, el in ipairs(list) do
+   for _, el in ipairs(proof) do
       cur_H = self.H2(cur_H, el)
    end
-   return cur_H
+   return cur_H 
+end
+
+
+function This:verify(root, proof, leaf)
+   assert(self.H)
+   return self:verify_H(root, proof, self.H(leaf))
+end
+
+function This:verify_H(root, proof, leaf_H)
+   return self:expect_root_H(proof, leaf_H) == root
 end
 
 return This

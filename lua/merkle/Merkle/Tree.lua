@@ -7,8 +7,10 @@
 
 -- Running-adding hash values.
 
-local MerkleNode = require "sha2.Merkle.Node"
-local MerkleVerify = require "sha2.Merkle.Verify"
+local MerkleNode = require "merkle.Merkle.Node"
+local MerkleVerify = require "merkle.Merkle.Verify"
+
+local This = {}
 
 for _,k in ipairs{"new", "class_pairify"} do This[k] = MerkleVerify[k] end
 
@@ -25,7 +27,7 @@ function This:add(data, keep_proof)
    assert(self.H)
    return self:add_H(self.H(data), keep_proof)
 end
-function This:add_H(H, keep_proof)  return self:_add_H(H, 1, keep_proof) end
+function This:add_H(H, keep_proof) return self:_add_H(H, 1, keep_proof) end
 
 local tab_insert = table.insert
 
@@ -44,7 +46,7 @@ function This:_re_merge(super_force)
    -- Keep putting two together if there are two of same depth, or using force.
    while right and (super_force or left.n == right.n) do
       local new_H, keep_either = self.H2(left.H, right.H), left.keep or right.keep
-      local new = MerkleNode:new{ H=new_H, n=n+1, keep=keep_either,
+      local new = MerkleNode:new{ H=new_H, n=left.n+1, keep=keep_either,
                                   left=left, right=right }
       if keep_either then  -- Keep what is needed for proofs.
          left.parent  = new
@@ -76,8 +78,10 @@ end
 
 -- Finish it. (again, `:add` changes it again.
 function This:finish()
-   self:_re_merge(true) -- Force-merge everything.
-   self.finished = true
+   if self.finished then
+      self:_re_merge(true) -- Force-merge everything.
+      self.finished = true
+   end
    return self.tops[1].H
 end
 
