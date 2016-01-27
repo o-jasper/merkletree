@@ -36,14 +36,14 @@ data:
 
 build: test_merkletree path_chunk_n_root
 
-test_merkletree: src/test_merkletree.go src/merkletree/merkletree.go src/common/common.go
+test_merkletree: src/test_merkletree.go src/merkle/merkletree.go src/merkle/merkle_common/common.go
 	GOPATH=`pwd` go build src/test_merkletree.go
 
-path_chunk_n_root: src/path_chunk_n_root.go src/merkletree/merkletree.go src/common/common.go
-	GOPATH=`pwd` go build src/path_chunk_n_root.go
+path_chunk_n_root: src/bin/path_chunk_n_root.go src/merkle/merkletree.go src/merkle/merkle_common/common.go
+	GOPATH=`pwd` go build src/bin/path_chunk_n_root.go
 
 buildso: merkletree.so
 
 # No idea on your milage.. Probably needs more work.
-merkletree.so: src/merkletree/merkletree.go
-	gccgo src/merkletree/merkletree.go -c -o merkletree.so
+merkletree.so: src/merkle/merkletree.go
+	GOPATH=`pwd` gccgo src/merkle/merkletree.go -c -o merkletree.so

@@ -52,7 +52,7 @@ func NewMerkleTreeGen(hasher Hasher, include_index bool) MerkleTreeGen {
 
 // Adds chunk where you calculated the hash, returning the leaf the current is on.
 func (gen *MerkleTreeGen) AddH(h HashResult, interest bool) *MerkleNode {
-	if len(h) != gen.Hasher.Size() { panic("Does not look like the correct hash.") }
+	//if len(h) != gen.Hasher.Size() { panic("Does not look like the correct hash.") }
 	gen.I += 1
 	if len(gen.List) == 0 || gen.List[0].Depth != 1 {
 		add_node := &MerkleNode{Hash:h, Left:nil, Right:nil, Up:nil, Interest:interest}
@@ -79,8 +79,11 @@ func (gen *MerkleTreeGen) AddH(h HashResult, interest bool) *MerkleNode {
 }
 
 func (gen *MerkleTreeGen) Add(leaf []byte, interest bool) *MerkleNode {
-	if gen.IncludeIndex { return gen.AddH(gen.Hasher.HwI(gen.I, leaf), interest) }
-	return gen.AddH(gen.Hasher.H(leaf), interest)
+	if gen.IncludeIndex {
+		return gen.AddH(gen.Hasher.HwI(gen.I, leaf), interest)
+	} else {
+		return gen.AddH(gen.Hasher.H(leaf), interest)
+	}
 }
 
 // Coerce the last parts together, returning the root.

@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"flag"
 	"math/rand"
-	"merkletree"
+	"merkle"
 	"encoding/hex"
 	
-	"common"
+	common "test/common"
+	"hash_extra"
+	"crypto/sha256"
 )
 
 //Returns:
@@ -16,19 +18,19 @@ import (
 // * path
 // * root hash
 
-func gen_data(seed int64, n_min int32, n_max int32, N int, i int) {
+func gen_data(seed int64, n_min int64, n_max int64, N int, i int) {
 	r := rand.New(rand.NewSource(seed))
 
-	gen := merkletree.NewMerkleTreeGen()  //Put chunks in.
-	var node *merkletree.MerkleNode
+	gen := merkle.NewMerkleTreeGen(hash_extra.Hasher{sha256.New()}, true)  //Put chunks in.
+	var node *merkle.MerkleNode
 	node = nil
 	for j:= 0 ; j < N ; j++ {
 		chunk := common.Rand_chunk(r, n_min, n_max)
 		if j == i {
 			fmt.Println(hex.EncodeToString(chunk))  //Print the chunk itself.			
-			node = gen.AddChunk(chunk, true)
+			node = gen.Add(chunk, true)
 		} else { 
-			gen.AddChunk(chunk, false)
+			gen.Add(chunk, false)
 		}
 	}
 	fmt.Println(hex.EncodeToString(node.Hash[:])) //Print the hash of the chunk.
@@ -54,10 +56,10 @@ func main() {
 	flag.IntVar(&N, "N", 256, "Number of chunks.")
 	r := rand.New(rand.NewSource(seed))
 	var i int
-	flag.IntVar(&i, "i", int(common.Rand_range(r, 0, int32(N-1))), "Which chunk to get.")
+	flag.IntVar(&i, "i", int(common.Rand_range(r, 0, int64(N-1))), "Which chunk to get.")
 	
 	flag.Parse()
 
-	gen_data(r.Int63(), int32(n_min), int32(n_max), N, i)
+	gen_data(r.Int63(), int64(n_min), int64(n_max), N, i)
 }
 
