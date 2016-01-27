@@ -20,18 +20,9 @@ correctly.
 
 * [Dropbox example](https://github.com/jorisbontje/cll-sim/blob/master/examples/decentralized-dropbox.cll), i suppose.
 
-#### Additional
-An idea is to take probabilities for leafs and make a somewhat lobsided tree
-that minimizes the average length of proving merkle paths. The checking mechanism
-doesnt care about the shape of the merkle tree, so it can be added later,
-also, `merkletree.Finish` can sort-of be used prematurely for lobsidedness.
-
-On the other hand, off-chain, the efficiency in memory is better if things you want
-to keep track of are bunched together.
-
-### Functions
+### Cumulative merkle-tree generation functions
 These are functions of the Merkle tree, using stuff in `src/merkle/`
-and `src/hash_extra/`, not any of the other stuff.
+and `src/hash_extra/`, not any of the other stuff. The trie doesnt work.
 
 not the signed merkle tree
 
@@ -66,50 +57,37 @@ checksum of the a leaf corresponds to the root checksum.
     func (node* MerkleNode) Verify(hasher Hasher, Hroot HashResult, leaf []byte) int8
     func (node* MerkleNode) VerifyWithIndex(hasher Hasher, Hroot HashResult, i uint64, leaf []byte) int8
 
+Just the on-build, **not** the typically used verifier, which is in the `Hasher` in
+the section below.
+
 Returns one of `Correct`, or ways it is wrong; 	`WrongDataPath`, `WrongDataLeaf`,
 `WrongDataRoot`, `WrongSigPath`, `WrongSigLeaf`, `WrongSigRoot`, `WrongSomeThing`,
 `WrongSig`.
 
+### Hasher functions
+A hasher takes a hash function, and produces `.H()`, `.HwI`, for hashing, and
+`.H_2`, and `.H_U2` to combine two hashes.
 
-    func ExpectedRoot(H_leaf [sha256.Size]byte, path [][sha256.Size]byte) [sha256.Size]byte
+One way to create one is `hash_extra.Hasher{sha256.New()}` i.e. just give it the
+less-featured hash to use.
 
-Returns the root expected, based on the leaf hash, and path.
+Additionally, hashers can also verify proofs;
 
-    func Verify(root [sha256.Size]byte, leaf []byte, path [][sha256.Size]byte) bool
-    
-Returns whether the root is correct, given the leaf chunk and path.
-(`VerifyH` requires you to `H(leaf)`)
+    func (hasher Hasher) MerkleVerifyH(root, Hleaf HashResult, path []HashResult) bool
+    func (hasher Hasher) MerkleVerify(root HashResult, leaf []byte, path []HashResult) bool
+    func (hasher Hasher) MerkleVerifyWithIndex(root HashResult, i uint64, leaf []byte, path []HashResult) bool
 
-**The following three** are sort-of alternative ways to use paths, they use parts
-of the constructed tree. However, the above are provided because you need a way
-to get the data is a simple binary format.
+Return whether verification succeeded given the information available.
 
-    func (node* MerkleNode) Verify(Hroot [sha256.Size]byte, leaf []byte) bool
+    func (hasher Hasher) MerkleExpectedRoot(H_leaf HashResult, path []HashResult) HashResult
 
-Verifies the whole thing, given a node that was indicated as interesting, the
-root hash and the leaf hash. (`VerifyH` requires you to `H(leaf)`)
-
-    func (node *MerkleNode) IsValid(recurse int32) MerkleNode, bool
-
-Tells you if the known tree upward from the given merkle node by the given
-recursions are valid. `recurse < 0` means that it will recurse all the way.
-
-    func (node *MerkleNode) CorrespondsH(leaf HashResult) bool
-    func (node *MerkleNode) Corresponds(leaf []byte) bool
-    func (node *MerkleNode) CorrespondsWithIndex(hasher Hasher, i uint64, leaf []byte) bool
-
-Tells you that the `*MerkleNode` is 1) a leaf, and 2) corresponds to the
-hash or (positioned)chunk.
-
-**Some additional functions** are `H`, `H_2`, which are the how `sha256.Sum256`
-is modified to have the additional right/left and uninteresting/interesting 
-information.
+Returns what the root is *expected* to be.
 
 ## TODO
 
-* An alternative Hasher; instead of `H_2` or `H_U2` appending,
+* Improve the Hasher; instead of `H_2` or `H_U2` appending,
   use `bitwise_xor(a, bitwise_not(b))` or something, it is faster.
-  (matters for Ethereum entity)
+  (matters particularl for Ethereum entities)
 
 * Make a corresponding contract that merely serves a verifying function given a
   root, leaf checksum and path. (NOTE: it used to work?)
