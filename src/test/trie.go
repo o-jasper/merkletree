@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"trie_easy"
 
-	"merkle/test_common"
+	test_common "test/common"
 	"merkle/merkle_common"
 	"encoding/hex"
 

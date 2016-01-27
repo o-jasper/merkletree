@@ -9,7 +9,7 @@ import (
 //	"time"
 
 	"merkle"
-	"merkle/test_common"
+	test_common "test/common"
 
 	"hash_extra"
 )

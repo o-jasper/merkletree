@@ -7,25 +7,25 @@ clean:
 test: test_merkle test_signed test_pubkey test_signed_negative
 #test_trie
 
-test_merkle:
+test_merkle: src/test/merkletree.go
 	echo ==== test_merkle;\
-	GOPATH=`pwd` go run src/test_merkletree.go
+	GOPATH=`pwd` go run $<
 
-test_signed:
+test_signed: src/test/signed_merkletree.go
 	echo ==== test_signed;\
-	GOPATH=`pwd` go run src/test_signed_merkletree.go
+	GOPATH=`pwd` go run $<
 
-test_signed_negative:
+test_signed_negative: src/test/signed_merkletree.go
 	echo ==== test_signed_negative;\
-	GOPATH=`pwd` go run src/test_signed_merkletree.go -negative true
+	GOPATH=`pwd` go run $< -negative true
 
-test_pubkey:
+test_pubkey: src/test/pubkey.go
 	echo ==== test_pubkey;\
-	GOPATH=`pwd` go run src/test_pubkey.go
+	GOPATH=`pwd` go run $<
 
-test_trie:
+test_trie: src/test/trie.go
 	echo ==== test_trie
-	GOPATH=`pwd` go run src/test_trie.go
+	GOPATH=`pwd` go run $<
 
 test_trie_merkle:
 	echo TODO
@@ -36,7 +36,7 @@ data:
 
 build: test_merkletree path_chunk_n_root
 
-test_merkletree: src/test_merkletree.go src/merkle/merkletree.go src/merkle/merkle_common/common.go
+test_merkletree: src/test/merkletree.go src/merkle/merkletree.go src/merkle/merkle_common/common.go
 	GOPATH=`pwd` go build src/test_merkletree.go
 
 path_chunk_n_root: src/bin/path_chunk_n_root.go src/merkle/merkletree.go src/merkle/merkle_common/common.go

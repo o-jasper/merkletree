@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"signed_merkle/signed_merkle_pubkey"	
-	"merkle/test_common"
+	test_common "test/common"
 
 	"math/big"
 )

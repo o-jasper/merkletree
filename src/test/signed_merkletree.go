@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"merkle"
-	"merkle/test_common"
+	test_common "test/common"
 
 	"signed_merkle"
 	"signed_merkle/signed_merkle_pubkey"
