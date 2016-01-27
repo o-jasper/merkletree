@@ -106,5 +106,5 @@ func main() {
 		}
 	}
 	fmt.Println("---")
-	fmt.Println("No messages above implies success. Had", j)
+	fmt.Println("No messages above implies success. Had", j, " (TODO number of tests.. i reckon)")
 }
