@@ -2,7 +2,7 @@
 default: test build
 
 clean:
-	rm test_merkletree path_chunk_n_root merkletree.so
+	rm dist/test/erkletree path_chunk_n_root dist/merkletree.so
 
 test: test_merkle test_signed test_pubkey test_signed_negative
 #test_trie
@@ -34,16 +34,23 @@ test_trie_merkle:
 data:
 	GOPATH=`pwd` go run src/path_chunk_n_root.go
 
-build: test_merkletree path_chunk_n_root
+build: dist/test/merkletree dist/path_chunk_n_root
 
-test_merkletree: src/test/merkletree.go src/merkle/merkletree.go src/merkle/merkle_common/common.go
-	GOPATH=`pwd` go build src/test_merkletree.go
+# NOTE basically just there to check if differs form `go run ...`
+dist/test/merkletree: src/test/merkletree.go src/merkle/merkletree.go src/merkle/merkle_common/common.go dist/test/
+	GOPATH=`pwd` go build src/test/merkletree.go ; mv merkletree dist/test/
 
-path_chunk_n_root: src/bin/path_chunk_n_root.go src/merkle/merkletree.go src/merkle/merkle_common/common.go
-	GOPATH=`pwd` go build src/bin/path_chunk_n_root.go
+dist/test/: dist/
+	mkdir dist/test
+
+dist/:
+	mkdir dist/
+
+dist/path_chunk_n_root: src/bin/path_chunk_n_root.go src/merkle/merkletree.go src/merkle/merkle_common/common.go dist/
+	GOPATH=`pwd` go build src/bin/path_chunk_n_root.go ; mv path_chunk_n_root dist/
 
 buildso: merkletree.so
 
 # No idea on your milage.. Probably needs more work.
-merkletree.so: src/merkle/merkletree.go
-	GOPATH=`pwd` gccgo src/merkle/merkletree.go -c -o merkletree.so
+dist/merkletree.so: src/merkle/merkletree.go dist/
+	GOPATH=`pwd` gccgo src/merkle/merkletree.go -c -o dist/merkletree.so
