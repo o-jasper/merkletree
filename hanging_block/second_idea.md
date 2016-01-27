@@ -18,8 +18,9 @@ accounted for.
 
 It is necessary for the HB-eth to dictate some aspects of what the checking
 contracts look like. Preferably the HB contract manipulates the code to find the
-HB version itself. Have not played with `create` enough to say i am sure it can be
-done.. We want: 
+HB version itself. Have not played with `create` enough to be entirely sure it
+can be done, but without this, you basically have to accept every contract into
+the system. We want: 
 
 1. Prepended part that allows HB to prepare it by filling in storage that was 
    Patricia-proven. The gas cost of this section must be known.
@@ -42,15 +43,25 @@ done.. We want:
 3. Calls stay in HB-contracts. Call address is deconstructed to have that HB contract
    address and an *instance* address.
    
-   TODO problem of modifying in-HB contracts and enforcing only-in-HB calling.
+   They're modified to send back to a HB contract. The initial arguments need to be
+   modified;
    
-   Call is modified to include the *instance* address in the beginning.
-   * Add to call data:
-     + the HB-contract-ID
-     + Current HB block number.
-     + Number of used storage ops.
-   * We're doing the burn-all-gas approach to `sload`ing wrong things, nothing
-     needs to be done about returning.
+   * The address of the contract, aswel an an 'instance' address.
+   * HB block number to compare.
+   * Keep track of number of storage ops.
 
-4. `address` needs to be modified to return the combination of the instance and
+4. Returning values is done plainly, but then the `sload`-of-not-proven
+   is handled by spinning off all gas.
+   
+   Or it prepends a didnt-do`sload`-not-proven to `return`s and returns
+   `"unproven sload"` if it comes across on.
+
+5. `address` needs to be modified to return the combination of the instance and
    Ethereum address against.
+
+### Problems
+
+* Are the modifications are possible?
+
+* Are the `call` modifications doable.. How to get a large enough memory-spot? Just
+  ditch the existing one, copy it to end, auch...

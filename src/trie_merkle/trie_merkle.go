@@ -11,17 +11,17 @@ import . "hash_extra"
 
 type HashTrieInterface interface {
 	TrieInterface
-	Hash() hash.Hash
-	HashDown1(str []byte, i int64, list *[]hash.Hash) *Trie
+	Hash() HashResult
+	HashDown1(str []byte, i int64, list *[]HashResult) *Trie
 }
 
-func Hashify(input interface{}, blank hash.Hash) HashTrieInterface {
+func Hashify(input interface{}) HashTrieInterface {
 	switch input.(type) {
 	case *Node16:
-		return &MT16{*input.(*Node16), false, blank,
-			[8]hash.Hash{}, [4]hash.Hash{}, [2]hash.Hash{}}
+		return &MT16{*input.(*Node16), false,
+			[8]HashResult{}, [4]HashResult{}, [2]HashResult{}}
 	case *DataNode:
-		return &MTData{*input.(*DataNode), blank}
+		return &MTData{*input.(*DataNode)}
 	}
 	panic("")
 	return nil

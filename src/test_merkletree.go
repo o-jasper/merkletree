@@ -23,7 +23,7 @@ func main() {
 	flag.Int64Var(&seed, "seed", 1/*time.Now().UnixNano()*/, "Random seed for test.")
 	flag.Int64Var(&n_min, "n_min", 1, "Minimum length of random chunk.")
 	flag.Int64Var(&n_max, "n_max", 256, "Maximum length of random chunk.")
-	flag.Int64Var(&N, "N", 8/*256*/, "Number of chunks.")
+	flag.Int64Var(&N, "N", 256, "Number of chunks.")
 	var incp float64
 	flag.Float64Var(&incp, "incp", 1, "Probability of including to check.")
 	var with_index bool 

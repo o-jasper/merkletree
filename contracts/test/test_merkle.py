@@ -9,8 +9,8 @@ s = t.state()
 c = s.contract('merkle_root.se', t.k0)
 c2 = s.contract('test/merkle_root_equiv.se', t.k0)
 
-#c2 = s.contract("return(57896044618658097711785492504343953926634992332820282019728792003956564819968+1)", t.k0)
-#print(s.send(t.k0, c2, 0))
+#c3 = s.contract("return(57896044618658097711785492504343953926634992332820282019728792003956564819968+1)", t.k0)
+#print(s.send(t.k0, c3, 0))
 
 def randval():
     return randrange(2**64)
