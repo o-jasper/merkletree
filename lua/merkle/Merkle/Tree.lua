@@ -64,24 +64,13 @@ function This:root_H_if_single()
    if #self.tops == 1 then return self.tops[1].H end
 end
 
--- Calculate the root. `:add`(`:add_H`) will change it!
-function This:root_H()
-   if #self.tops > 0 then
-      local cur_H, i = self.tops[1].H, 2
-      while i < #self.tops do
-         cur_H = self.H2(cur_h. self.tops[i].H)
-         i = i + 1
-      end
-      return cur_h
-   end
-end
-
 -- Finish it. (again, `:add` changes it again.
 function This:finish()
-   if self.finished then
+   if not self.finished then
       self:_re_merge(true) -- Force-merge everything.
       self.finished = true
    end
+   assert(#self.tops == 1)
    return self.tops[1].H
 end
 

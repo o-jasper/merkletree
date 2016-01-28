@@ -58,6 +58,6 @@ end
 local m = 10
 while m > 0 do
    print(m)
-   test_blast(128, 0.1)
+   test_blast(19, 0.1)
    m = m - 1
 end

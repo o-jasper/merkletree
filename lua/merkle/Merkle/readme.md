@@ -10,8 +10,6 @@ or you can derive from this thing and add them in the metatable.
 
   Similarly `:add_H(H, keep_proof)`, but there you do the hash for it.
 
-* `Tree:root_H()` returns the root *as it would be now*. Adding after changes it!
-
 *  `Tree:finish()` finishes it and returns the root.
 
   You *can* continue, changing the root, and creating a lobsided tree.
