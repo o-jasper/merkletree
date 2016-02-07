@@ -198,10 +198,12 @@ end
 
 -- Object you can feed hashes too.
 local Hash256 = {}
+Hash256.__index = Hash256
+Hash256.__name  = "Hash256"
 
-Hash256.__index= Hash256
-
-Hash256.init_H = initH256
+Hash256.fun         = hash256
+Hash256.init_H      = initH256
+Hash256.finalresult = finalresult256
 
 function Hash256:new(new)
    new = setmetatable(new or {}, self)
@@ -239,20 +241,24 @@ end
 function Hash256:close()
    self.msg = preproc(self.msg, self.len)
    self:add("")
-   return finalresult256(self.H)
+   return self.finalresult(self.H)
 end
 
 -- Hash224 version
 local Hash224 = {}
-for k,v in pairs(Hash256) do Hash224[k] = Hash256 end
+for k,v in pairs(Hash256) do Hash224[k] = v end
 
 Hash224.__index = Hash224
-Hash224.init_H = initH224  -- What makes it indeed 224.
+Hash224.__name  = "Hash224"
+
+Hash224.fun         = hash224
+Hash224.init_H      = initH224
+Hash224.finalresult = finalresult224
 
 return {
   hash224 = hash224,
   hash256 = hash256,
 
-  Hash256 = Hash256,
   Hash224 = Hash224,
+  Hash256 = Hash256,
 }
