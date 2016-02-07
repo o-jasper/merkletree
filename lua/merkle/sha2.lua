@@ -1,17 +1,15 @@
--- SHA-256 code in Lua 5.2; based on the pseudo-code from
--- Wikipedia (http://en.wikipedia.org/wiki/SHA-2)
-
 -- From http://lua-users.org/wiki/SecureHashAlgorithm
 --   http://lua-users.org/lists/lua-l/2014-08/msg00628.html
 -- Roberto Ierusalimschy, and is licensed under MIT license
 --
 -- Modified by Jasper den Ouden, merely minor changes, ikie 
---  stripping the to-hex portions.
+--  stripping the to-hex portions. Still MIT.
+
+-- SHA-256 code in Lua 5.2; based on the pseudo-code from
+-- Wikipedia (http://en.wikipedia.org/wiki/SHA-2)
 
 local band, rrotate, bxor, rshift, bnot =
   bit32.band, bit32.rrotate, bit32.bxor, bit32.rshift, bit32.bnot
-
-local string, setmetatable, assert = string, setmetatable, assert
 
 -- Initialize table of round constants
 -- (first 32 bits of the fractional parts of the cube roots of the first
@@ -72,7 +70,8 @@ local function preproc (msg, len)
 end
 
 
-local function initH224 (H)
+local function initH224 ()
+  local H = {}
   -- (second 32 bits of the fractional parts of the square roots of the
   -- 9th through 16th primes 23..53)
   H[1] = 0xc1059ed8
@@ -87,7 +86,8 @@ local function initH224 (H)
 end
 
 
-local function initH256 (H)
+local function initH256()
+  local H = {}
   -- (first 32 bits of the fractional parts of the square roots of the
   -- first 8 primes 2..19):
   H[1] = 0x6a09e667
@@ -170,11 +170,10 @@ end
 
 
 ----------------------------------------------------------------------
-local HH = {}    -- to reuse
 
 local function hash224 (msg)
   msg = preproc(msg, #msg)
-  local H = initH224(HH)
+  local H = initH224()
 
   -- Process the message in successive 512-bit (64 bytes) chunks:
   for i = 1, #msg, 64 do
@@ -187,7 +186,7 @@ end
 
 local function hash256 (msg)
   msg = preproc(msg, #msg)
-  local H = initH256(HH)
+  local H = initH256()
 
   -- Process the message in successive 512-bit (64 bytes) chunks:
   for i = 1, #msg, 64 do
@@ -196,6 +195,7 @@ local function hash256 (msg)
 
   return finalresult256(H)
 end
+
 ----------------------------------------------------------------------
 local mt = {}
 
