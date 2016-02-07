@@ -196,38 +196,63 @@ local function hash256 (msg)
   return finalresult256(H)
 end
 
-----------------------------------------------------------------------
-local mt = {}
+-- Object you can feed hashes too.
+local Hash256 = {}
 
-local function new256 ()
-  local o = {H = initH256({}), msg = "", len = 0}
-  setmetatable(o, mt)
-  return o
+Hash256.__index= Hash256
+
+Hash256.init_H = initH256
+
+function Hash256:new(new)
+   new = setmetatable(new or {}, self)
+   new:init()
+   return new
 end
 
-mt.__index = mt
+function Hash256:init()
+   self.H = self.init_H()
+   self.len = 0
+   self.msg = ""
 
-function mt:add (m)
-  self.msg = self.msg .. m
-  self.len = self.len + #m
-  local t = 0
-  while #self.msg - t >= 64 do
-    digestblock(self.msg, t + 1, self.H)
-    t = t + 64 
-  end
-  self.msg = self.msg:sub(t + 1, -1)
+   while true do  -- List is taken as string arguments.
+      local el = table.remove(self, 1)
+      if el ~= nil then
+         assert(type(el) == "string")
+         self:add(el)
+      else
+         return
+      end
+   end
 end
 
-
-function mt:close ()
-  self.msg = preproc(self.msg, self.len)
-  self:add("")
-  return finalresult256(self.H)
+function Hash256:add(m)
+   self.msg = self.msg .. m
+   self.len = self.len + #m
+   local t = 0
+   while #self.msg - t >= 64 do
+      digestblock(self.msg, t + 1, self.H)
+      t = t + 64 
+   end
+   self.msg = self.msg:sub(t + 1, -1)
 end
-----------------------------------------------------------------------
+
+function Hash256:close()
+   self.msg = preproc(self.msg, self.len)
+   self:add("")
+   return finalresult256(self.H)
+end
+
+-- Hash224 version
+local Hash224 = {}
+for k,v in pairs(Hash256) do Hash224[k] = Hash256 end
+
+Hash224.__index = Hash224
+Hash224.init_H = initH224  -- What makes it indeed 224.
 
 return {
   hash224 = hash224,
   hash256 = hash256,
-  new256 = new256,
+
+  Hash256 = Hash256,
+  Hash224 = Hash224,
 }

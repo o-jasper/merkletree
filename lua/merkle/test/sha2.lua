@@ -25,7 +25,7 @@ assert(sha2_hex.hash256"The quick brown fox jumps over the lazy cog" ==
 assert(sha2_hex.hash256"" ==
   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
 
-assert(enhex(sha2.new256():close()) ==
+assert(enhex(sha2.Hash256:new():close()) ==
   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
 
 assert(sha2_hex.hash256"123456" ==
@@ -47,7 +47,7 @@ assert(sha2_hex.hash256(string.rep('a', 64) .. '\n') ==
 assert(sha2_hex.hash256(string.rep('a', 65) .. '\n') ==
   "574883a9977284a46845620eaa55c3fa8209eaa3ebffe44774b6eb2dba2cb325")
 
-local x = sha2.new256()
+local x = sha2.Hash256:new()
 for i = 1, 65 do x:add('a') end
 x:add('\n')
 assert(enhex(x:close()) ==
@@ -56,7 +56,7 @@ assert(enhex(x:close()) ==
 
 -- some large files
 local function parts (s, j)
-  local x = sha2.new256()
+  local x = sha2.Hash256:new()
   local i = 1; j = 1
   while i <= #s do
     x:add(s:sub(i, i + j))
@@ -82,7 +82,7 @@ assert(enhex(parts(s, #s + 10)) ==
 
 if arg[1] then
   local file = assert(io.open (arg[1], 'rb'))
-  local x = sha2.new256()
+  local x = sha2.Hash256:new()
   for b in file:lines(2^12) do
     x:add(b)
   end
