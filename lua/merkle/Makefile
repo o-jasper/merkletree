@@ -9,10 +9,10 @@ test_sha2: test_sha2_came_with test_sha2_bin224 test_sha2_bin256
 test_sha2_came_with:   # Tests it came with.
 	lua test/sha2.lua
 
-test_sha2_bin256:  # Compares to the function. (NOTE: only the 256 i think tho..
+test_sha2_bin256:  # Compares to the function.
 	sh test/test.sh 256 | head -n 100
 
-test_sha2_bin224:  # Compares to the function. (NOTE: only the 256 i think tho..
+test_sha2_bin224:  # Compares to the function.
 	sh test/test.sh 224 | head -n 100
 
 # Test the merkle tree

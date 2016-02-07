@@ -34,6 +34,3 @@ while j > 0 do
    t1(sha2.Hash256, sha2.hash256, math.random(4,10))
    j = j - 1
 end
-
-
-
