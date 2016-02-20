@@ -4,16 +4,22 @@ default: test
 test: test_sha2 test_merkle
 
 # Test the sha2 stuff.
-test_sha2: test_sha2_came_with test_sha2_bin224 test_sha2_bin256
+test_sha2: test_sha2_came_with test_sha2_more test_sha2_bin224 test_sha2_bin256
 
 test_sha2_came_with:   # Tests it came with.
 	lua test/sha2.lua
 
-test_sha2_bin256:  # Compares to the function.
-	sh test/test.sh 256 | head -n 100
+test_sha2_more:
+	lua test/sha2_more.lua
 
-test_sha2_bin224:  # Compares to the function.
-	sh test/test.sh 224 | head -n 100
+test_sha2_bin256:  # Compares lua to program sha256sum
+	sh test/test.sh 256 | head -n 10
+
+test_sha2_bin224:  # idem
+	sh test/test.sh 224 | head -n 10
+
+# TODO compare luapower sha2? (doesnt work for me right now,
+# luapower-all/bin/linux64/?.so is in `package.cpath`
 
 # Test the merkle tree
 test_merkle: test_merkle_lua
