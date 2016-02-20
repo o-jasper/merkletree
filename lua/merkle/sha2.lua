@@ -256,9 +256,9 @@ Hash224.init_H      = initH224
 Hash224.finalresult = finalresult224
 
 return {
-  hash224 = hash224,
-  hash256 = hash256,
+  sha224 = hash224,
+  sha256 = hash256,
 
-  Hash224 = Hash224,
-  Hash256 = Hash256,
+  Sha224 = Hash224,
+  Sha256 = Hash256,
 }

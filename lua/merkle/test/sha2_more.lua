@@ -1,10 +1,10 @@
 local sha2 = require 'merkle.sha2'
 
-assert(sha2.Hash224.fun == sha2.hash224)
-assert(sha2.Hash224.__name == "Hash224", sha2.Hash224.__name)
+assert(sha2.Sha224.fun == sha2.sha224)
+assert(sha2.Sha224.__name == "Hash224", sha2.Sha224.__name)
 
-assert(sha2.Hash256.fun == sha2.hash256)
-assert(sha2.Hash256.__name == "Hash256")
+assert(sha2.Sha256.fun == sha2.sha256)
+assert(sha2.Sha256.__name == "Hash256")
 
 local function gstr()
    local fd = io.open("/dev/random")
@@ -30,7 +30,7 @@ end
 local j = 10
 
 while j > 0 do
-   t1(sha2.Hash224, sha2.hash224, math.random(4,10))
-   t1(sha2.Hash256, sha2.hash256, math.random(4,10))
+   t1(sha2.Sha224, sha2.sha224, math.random(4,10))
+   t1(sha2.Sha256, sha2.sha256, math.random(4,10))
    j = j - 1
 end

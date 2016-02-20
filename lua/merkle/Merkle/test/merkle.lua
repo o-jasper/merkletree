@@ -1,5 +1,5 @@
 
-local H = require("merkle.sha2").hash224
+local H = require("merkle.sha2").sha224
 
 local Tree = require "merkle.Merkle.Tree"
 local verify = require("merkle.Merkle.Verify"):new{ H = H }
@@ -12,7 +12,7 @@ local function test_example()
    tree:add("three")
    tree:add("four")
 
-   local root_H = tree:finish()
+   local root_H = tree:close()
 
    local proof = provable:produce_proof()
 
@@ -47,7 +47,7 @@ local function test_blast(n, prove_p)
       end
       n = n - 1
    end
-   local root_H = tree:finish()
+   local root_H = tree:close()
 
    for i, node in ipairs(provables) do
       local proof = node:produce_proof()

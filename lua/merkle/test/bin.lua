@@ -1,7 +1,7 @@
 local sha2 = require 'merkle.sha2'
 local enhex = require "merkle.enhex"
 
-local hash, Hash = sha2["hash" .. arg[1]], sha2["Hash" .. arg[1]]
+local hash, Hash = sha2["sha" .. arg[1]], sha2["Sha" .. arg[1]]
 
 local fd = io.open("/dev/stdin")
 local str = fd:read("l") or ""
