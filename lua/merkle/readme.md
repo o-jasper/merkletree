@@ -25,13 +25,11 @@ Again, see the directory itself for specifics. (TODO)
 comparing it with the commands `sha224sum` and `sha256sum`.
 
 Merkle trees is merely tested by making the tree and proofs, and
-checking the proof work out.
+checking the produced proofs work out, and incorrect proofs *do not* work.
 
 It is important to know what is actually tested. These tests run on
-random data and examples. *TODO* is testing that wrong merkle proofs
-indeed come out negative.
+random data and examples.
 
 ## TODO
 * `sha2.lua` needs `bit32`, which appears not available on `luajit`.
 * When luajit, compare that too.
-* Test that wrong merkle proofs do *not* work.

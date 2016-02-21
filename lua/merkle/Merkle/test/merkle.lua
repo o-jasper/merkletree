@@ -22,15 +22,33 @@ end
 
 test_example()
 
+local random_fd
+
 local function rand_str(lmin, lmax)
-   local i, n, ret = 0, math.random(lmin or 4, lmax or 10), {}
-   while i < n do
-      table.insert(ret, string.char(math.random(33, 126)))
-      i = i + 1
+   local n = math.random(lmin or 4, lmax or 10)
+   if not arg[1] then
+      local i, ret = 0, {}
+      while i < n do
+         table.insert(ret, string.char(math.random(33, 126)))
+         i = i + 1
+      end
+      return table.concat(ret)
+   else
+      random_fd = random_fd or io.open(arg[1])
+      return random_fd:read(n)
    end
-   return table.concat(ret)
 end
 
+local function change_random_bit(proof)
+   local i = math.random(#proof)
+   local j = math.random(#proof[i])
+
+   -- Change one bit, now the proof should be invalid.
+   local mod = string.char((string.byte(proof[i], j) + 2^(math.random(8)-1))%256)
+   proof[i] = string.sub(proof[i], 1, i-1) .. mod .. string.sub(proof[i], i + 1)
+end
+
+-- TODO Proofs that _do_not_ work out.
 local function test_blast(n, prove_p)
    local tree = Tree:new{ H = H }
 
@@ -52,6 +70,16 @@ local function test_blast(n, prove_p)
    for i, node in ipairs(provables) do
       local proof = node:produce_proof()
       assert(verify:verify(root_H, proof, node.data), string.format("Failed %d", i))
+      -- Modify a bit, and check it is wrong.
+      change_random_bit(proof)
+      assert(not verify:verify(root_H, proof, node.data),
+             string.format("False positive(alter 1 bit) %d", i))
+
+      -- Make up nonsense, 
+      local total_nonsense = {}
+      for _,el in ipairs(proof) do table.insert(total_nonsense, rand_str(#el, #el)) end
+      assert(not verify:verify(root_H, total_nonsense, node.data),
+             string.format("False positive(nonsense) %d", i))
    end
 end
 

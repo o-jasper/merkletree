@@ -22,7 +22,10 @@ test_sha2_bin224:  # idem
 # luapower-all/bin/linux64/?.so is in `package.cpath`
 
 # Test the merkle tree
-test_merkle: test_merkle_lua
+test_merkle: test_merkle_devrandom
+
+test_merkle_devrandom:
+	lua Merkle/test/merkle.lua /dev/random
 
 test_merkle_lua:
 	lua Merkle/test/merkle.lua
