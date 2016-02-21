@@ -1,3 +1,5 @@
+#!/bin/bash
+
 N=0
 
 while true; do
