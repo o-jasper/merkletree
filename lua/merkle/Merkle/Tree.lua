@@ -19,16 +19,27 @@ This.__index = This
 function This:init()
    MerkleVerify.init(self)
    self.tops = {}
+   self.kept_keys = {}
 end
 
 This.keep_proof_default = false
+This.keep_data = true
 
 function This:add(data, keep_proof)
    assert(self.H)
-   return self:add_H(self.H(data), keep_proof)
+   local ret = self:add_H(self.H(data), keep_proof)
+   ret.data = self.keep_data and data or nil
+   return ret
 end
 
--- TODO function This:add_w_i(i, data, keep_proof)  (Also the verify.)
+function This:add_key(keydata, data, keep_proof)  -- Adds with key.
+   local keep_proof = keep_proof or self.keep_proof_default or self.kept_keys[keydata]
+   local ret = self:add(keydata .. data, keep_proof)
+   if keep_proof then
+      self.kept_keys[keydata] = ret
+   end
+   return ret
+end
 
 function This:add_H(H, keep_proof) return self:_add_H(H, 1, keep_proof) end
 

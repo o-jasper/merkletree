@@ -54,4 +54,8 @@ function This:verify_H(root, proof, leaf_H)
    return self:expect_root_H(proof, leaf_H) == root
 end
 
+function This:verify_key(root, proof, key, leaf)
+   return self:verify(root, proof, key .. leaf)
+end
+
 return This
