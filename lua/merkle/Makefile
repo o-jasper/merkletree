@@ -30,4 +30,7 @@ test_merkle_devrandom:
 test_merkle_lua:
 	lua Merkle/test/merkle.lua
 
+test_statement:  # Just runs it, really.
+	lua statement/test/statement.lua
+
 # test_merkle_bin  ... TODO combine with go test?

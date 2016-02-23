@@ -5,29 +5,45 @@
 --  by the Free Software Foundation, either version 3 of the License, or
 --  (at your option) any later version.
 
+-- Note: typically the object is one-use.
+-- In case of merkle tree, merkle tree API is available.
 local Statementize = {}
-Statementize.__index= Statementize
+Statementize.__index= "i am virtual"
 
 function Statementize:new(new)
-   return setmetatable(new, self)
+   new = setmetatable(new, self)
+   new:init()
+   return new
 end
 
-function Statementize:class_derive(Replace)
+function Statementize:init()
+   error("init needs to be externally defined.")
+end
+
+function Statementize:class_derive(...)
    local New = {}
    for k,v in pairs(self)    do New[k] = v end
-   for k,v in pairs(Replace) do New[k] = v end
-   New.__index = {}
+   for _, Replace in ipairs{...} do
+      for k,v in pairs(Replace) do New[k] = v end
+   end
+   New.__index = New
+   assert(New.hash and New.make)
+   assert(New.init and New.add_key,
+          "Required functions not defined.(:init or :add_key(key,val)")
    return New
 end
 
 -- Statementize.hash
 Statementize.encode = require("storebin").encode
 
+Statementize.add_n = 0
 local function hashtree(self, tree, front)
 
    local encode = self.encode
 
    local function hashtree_val(key, val)
+      assert(({number=true,string=true})[type(key)])
+
       if type(val) == "table" then  -- Recurse into branch.
          hashtree(self, val, front .. encode(key))
       else
@@ -38,7 +54,7 @@ local function hashtree(self, tree, front)
    local into = { number={}, string={} }
    for k in pairs(tree) do
       local list = into[type(k)]
-      assert(list, "Only number or string keys")
+      assert(list, "Only number or string keys, got; " .. type(k))
       table.insert(list, k)
    end
 
@@ -48,7 +64,10 @@ local function hashtree(self, tree, front)
    end
 end
 
-function Statementize:hash(tree) return hashtree(self, tree, "") end
+function Statementize:hash(tree)
+   hashtree(self, tree, "")
+   return self:close()
+end
 
 local b64 = require "page_html.util.fmt.base64"
 
@@ -73,7 +92,7 @@ Statementize.always_nonce = true
 function Statementize:make(tree)
    if self.never_nonce then
       assert( not (self.gen_nonce or tree.nonce) )
-      return self.name .. ":" .. self.hashstr(tree)
+      return self.name .. ":" .. self:hashstr(tree)
    else
       local nonce = tree.nonce or (self.gen_nonce and self:gen_nonce())
       if nonce then
@@ -81,17 +100,17 @@ function Statementize:make(tree)
          assert(type(nonce) == "string")
          assert(not self.nonce_assert_size or self.nonce_size == #nonce)
 
-         local ret = self.name .. ":" .. b64.enc(nonce) .. ":" .. self.hashstr(tree)
+         local ret = self.name .. ":" .. b64.enc(nonce) .. ":" .. self:hashstr(tree)
          tree.nonce = nonce  -- Put it back on.
          return ret
       else
          assert(not self.always_nonce)
-         return self.name .. ":" .. self.hashstr(tree)
+         return self.name .. ":" .. self:hashstr(tree)
       end
    end
 end
 
-function Statement:verify(tree, statement_str)
+function Statementize:verify(tree, statement_str)
    local nonce = string.match(statement_str, ":([^:]+):")
    if nonce then
       if tree.nonce and tree.nonce ~= nonce then

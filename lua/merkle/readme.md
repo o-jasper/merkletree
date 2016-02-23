@@ -16,7 +16,9 @@ The `.H`, *and* `.H2` members allow for selecting a hash function
 
 ### `statement/`
 Statements, roughly you can put in trees, and it produces a "root hash",
-optionally with a nonce.
+optionally with a nonce. The underlying system it uses can be
+straight-from-hashes or with merkle tree. How to go depends on what result
+you want.
 
 Again, see the directory itself for specifics. (TODO)
 
@@ -24,12 +26,21 @@ Again, see the directory itself for specifics. (TODO)
 `make test` runs the tests. Sha2 has example tests, and tests
 comparing it with the commands `sha224sum` and `sha256sum`.
 
-Merkle trees is merely tested by making the tree and proofs, and
-checking the produced proofs work out, and incorrect proofs *do not* work.
+Merkle trees are merely tested by making the tree and true/false proofs,
+and checking for no false negatives/positives.
+
 
 It is important to know what is actually tested. These tests run on
-random data and examples.
+random data and examples. It might be good to look for edge cases.
 
 ## TODO
 * `sha2.lua` needs `bit32`, which appears not available on `luajit`.
+
 * When luajit, compare that too.
+
+* Empty Merkle trees could be a PITA. How to deal?
+
+* The Merkle statements are derived from the merkle tree, thus it
+  can be tested whether that infacts works properly.
+
+* Statement empty subtables are not noted.
