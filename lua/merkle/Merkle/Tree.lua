@@ -45,7 +45,9 @@ function This:add_H(H, keep_proof) return self:_add_H(H, 1, keep_proof) end
 
 local tab_insert = table.insert
 
+This.cnt_added = 0
 function This:_add_H(H, n, keep_proof)
+   self.cnt_added = self.cnt_added + 1
    assert(not self.finished)
 
    local keep_proof = (keep_proof==nil and self.keep_proof_default) or keep_proof
@@ -84,7 +86,9 @@ function This:close()
       self:_re_merge(true) -- Force-merge everything.
       self.finished = true
    end
-   assert(#self.tops == 1)
+   assert(#self.tops == 1,
+          string.format("It didnt re-merge it into one result. Got %s(%s)",
+                        #self.tops, self.cnt_added))
    return self.tops[1].H
 end
 
