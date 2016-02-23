@@ -38,9 +38,7 @@ random data and examples. It might be good to look for edge cases.
 
 * When luajit, compare that too.
 
-* Empty Merkle trees could be a PITA. How to deal?
-
 * The Merkle statements are derived from the merkle tree, thus it
-  can be tested whether that infacts works properly.
+  can be tested whether the merkle aspect infacts works properly.
 
-* Statement empty subtables are not noted.
+* Compare with the go implementation.

@@ -33,9 +33,9 @@ local function run_1(Which, tree)
    tree = tree or gen_tree(true, 5, {mini=1, maxi=102, no_boolean=true})
    tree.nonce = nil  -- Just in case.
 
-   local r1 = Which:new():make(tree)
--- Really kindah only means anything if `pairs` not deterministic.
---   assert(r1 == Which:new():make(tree))
+   local r1 = Which:new():make_text(tree)
+-- Really kindah only test the function, only more if `pairs` nondeterministic.
+   assert(Which:new():verify_from_text(tree, r1))
    print(r1)
 end
 
@@ -60,4 +60,48 @@ run_1(statement_merkle.Sha256, {x={y={}}})
 run_1(statement_merkle.Sha256)
 run_1(statement_merkle.Sha256N)
 run_1(statement_merkle.Sha224)
+run_1(statement_merkle.Sha224N)
+
+-- "Damage" one to look if `pairs` indeterminism can break it.
+print("INDETERMINISM")
+local function hashtree(self, tree, front)
+
+   local encode = self.encode
+
+   local function hashtree_val(key, val)
+      assert(({number=true,string=true})[type(key)])
+
+      if type(val) == "table" then  -- Recurse into branch.
+         hashtree(self, val, front .. encode(key))
+      else
+         self:add_key(front .. encode(key), encode(val))
+      end
+   end
+
+   local into = { number={}, string={} }
+   for k in pairs(tree) do
+      local list = into[type(k)]
+      assert(list, "Only number or string keys, got; " .. type(k))
+      table.insert(list, k)
+      if #list > 0 then  -- TEST INDETERMINISM
+         table.insert(list, math.random(#list), k)
+      end
+   end
+
+   if #into.number == 0 and #into.string == 0 then  -- Completely empty. I reserve __em
+      self:add_key(front .. encode("__em"), encode(true))
+   else
+      for _,list in ipairs{into.number, into.string} do -- `pairs(into)` wont do!
+         table.sort(list)
+         for _, k in ipairs(list) do hashtree_val(k, tree[k]) end
+      end
+   end
+end
+
+function statement_merkle.Sha224N:hash(tree)
+   hashtree(self, tree, "")
+   return self:close()
+end
+-- Note: probably good for optimizability of lua if this werent possible :)
+
 run_1(statement_merkle.Sha224N)

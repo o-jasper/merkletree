@@ -56,7 +56,7 @@ local function hashtree(self, tree, front)
       local list = into[type(k)]
       assert(list, "Only number or string keys, got; " .. type(k))
       table.insert(list, k)
---      if #list > 0 then  -- Switch to this to check `pairs` indetermism doesnt matter.
+--      if #list > 0 then  -- This modification tests that `pairs` may be indeterministic.
 --         table.insert(list, math.random(#list), k)
 --      end
    end
@@ -75,10 +75,6 @@ function Statementize:hash(tree)
    hashtree(self, tree, "")
    return self:close()
 end
-
-local b64 = require "page_html.util.fmt.base64"
-
-function Statementize:hashstr(tree) return b64.enc(self:hash(tree)) end
 
 --Note: these are overly high values for many applications..
 Statementize.nonce_size = 16
@@ -99,7 +95,7 @@ Statementize.always_nonce = true
 function Statementize:make(tree)
    if self.never_nonce then
       assert( not (self.gen_nonce or tree.nonce) )
-      return self.name .. ":" .. self:hashstr(tree)
+      return "", self:hash(tree)
    else
       local nonce = tree.nonce or (self.gen_nonce and self:gen_nonce())
       if nonce then
@@ -107,30 +103,65 @@ function Statementize:make(tree)
          assert(type(nonce) == "string")
          assert(not self.nonce_assert_size or self.nonce_size == #nonce)
 
-         local ret = self.name .. ":" .. b64.enc(nonce) .. ":" .. self:hashstr(tree)
+         local hash = self:hash(tree)
          tree.nonce = nonce  -- Put it back on.
-         return ret
+         return nonce, hash
       else
          assert(not self.always_nonce)
-         return self.name .. ":" .. self:hashstr(tree)
+         return "", self:hash(tree)
       end
    end
 end
 
-function Statementize:verify(tree, statement_str)
-   local nonce = string.match(statement_str, ":([^:]+):")
+-- Verify by reading checking equality, including the nonce.
+function Statementize:verify(tree, nonce, hash)
    if nonce then
       if tree.nonce and tree.nonce ~= nonce then
          return false, "nonces mismatch"
       end
       tree.nonce = nonce
-      local got_statement_str = self:make(tree)
-      return got_statement_str == statement_str, "nonced result", got_statement_str
+      local ret_nonce, ret_hash = self:make(tree)
+      assert(ret_nonce == nonce)
+      return hash == ret_hash, "nonced result"
    elseif tree.nonce then
       return false, "statement_str no nonce, yet tree does"
    else
-      local got_statement_str = self:make(tree)
-      return got_statement_str == statement_str, "result", got_statement_str
+      local _, ret_hash = self:make(tree)
+      return hash == ret_hash , "result"
+   end
+end
+
+-- b64(and : separators) encoded stuff.
+local b64 = require "page_html.util.fmt.base64"
+--Textual representation of the above.
+
+function Statementize:en_text(nonce, hash)
+   return self.name .. (#nonce > 0 and (":" .. b64.enc(nonce) .. ":") or ":")
+      .. b64.enc(hash)
+end
+
+function Statementize:make_text(tree)
+   return self:en_text(self:make(tree))
+end
+
+function Statementize:de_text(statement_str)
+   local name, nonce, hash = string.match(statement_str, "^([^:]+):([^:]+):([^:]+)$")
+   if hash then
+      assert(name and nonce)
+      return name, b64.dec(nonce), b64.dec(hash)
+   else
+      local name, hash = string.match(statement_str, "^([^:]+):([^:]+)$")
+      assert(name and hash)
+      return name, false, b64.dec(hash)
+   end
+end
+
+function Statementize:verify_from_text(tree, statement_str)
+   local name, nonce, hash = self:de_text(statement_str)
+   if name == self.name then
+      return self:verify(tree, nonce, hash)
+   else
+      return false, "I dont check this name"
    end
 end
 
