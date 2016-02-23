@@ -30,19 +30,8 @@ local gen_tree = require("storebin.test.lib")[2]
 local statement = require "merkle.statement"
 
 local function run_1(Which, tree)
-   while not tree do
-      tree = gen_tree(true, 5, {mini=1, maxi=102, no_boolean=true})
-      tree.nonce = nil  -- Just in case.
-
-      local any = false
-      for k,v in pairs(tree) do  -- No point if it just leads to empty tables
-         if type(v) ~= "table" then
-            any = true
-            break
-         end
-      end
-      tree = any and tree
-   end
+   tree = tree or gen_tree(true, 5, {mini=1, maxi=102, no_boolean=true})
+   tree.nonce = nil  -- Just in case.
 
    local inst = Which:new()
    print(inst:make(tree))
@@ -63,7 +52,8 @@ run_1(statement.Sha224N)
 local statement_merkle = require "merkle.statement.merkle"
 --for _,k in ipairs{"Sha256", "Sha224"} do assert( sha2[k].init == statement[k].init ) end
 
-run_1(statement_merkle.Sha256, {[""]=""})
+run_1(statement_merkle.Sha256, {})
+run_1(statement_merkle.Sha256, {x={y={}}})
 
 run_1(statement_merkle.Sha256)
 run_1(statement_merkle.Sha256N)

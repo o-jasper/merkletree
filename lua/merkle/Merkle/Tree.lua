@@ -80,11 +80,17 @@ function This:root_H_if_single()
    if #self.tops == 1 then return self.tops[1].H end
 end
 
+This.allow_empty = true
+
 -- Finish it. (again, `:add` changes it again.
 function This:close()
    if not self.finished then
       self:_re_merge(true) -- Force-merge everything.
       self.finished = true
+   end
+   if #self.tops == 0 and self.allow_empty then
+      self.was_empty = true
+      return self.H("")
    end
    assert(#self.tops == 1,
           string.format("It didnt re-merge it into one result. Got %s(%s)",

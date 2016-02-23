@@ -58,9 +58,13 @@ local function hashtree(self, tree, front)
       table.insert(list, k)
    end
 
-   for _,list in ipairs{into.number, into.string} do -- `pairs(into)` wont do!
-      table.sort(list)
-      for _, k in ipairs(list) do hashtree_val(k, tree[k]) end
+   if #into.number == 0 and #into.string == 0 then  -- Completely empty. I reserve __em
+      self:add_key(front .. encode("__em"), encode(true))
+   else
+      for _,list in ipairs{into.number, into.string} do -- `pairs(into)` wont do!
+         table.sort(list)
+         for _, k in ipairs(list) do hashtree_val(k, tree[k]) end
+      end
    end
 end
 

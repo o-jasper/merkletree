@@ -1,7 +1,7 @@
 
 default: test
 
-test: test_sha2 test_merkle
+test: test_sha2 test_merkle test_statement
 
 # Test the sha2 stuff.
 test_sha2: test_sha2_came_with test_sha2_more test_sha2_bin224 test_sha2_bin256
@@ -30,6 +30,7 @@ test_merkle_devrandom:
 test_merkle_lua:
 	lua Merkle/test/merkle.lua
 
+# TODO test merkle version stuff of statement, identical-input.
 test_statement:  # Just runs it, really.
 	lua statement/test/statement.lua
 
