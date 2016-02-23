@@ -8,7 +8,7 @@ assert(sha2.Sha256.__name == "Hash256")
 
 local function gstr()
    local fd = io.open("/dev/random")
-   local str = fd:read("l") or ""
+   local str = fd:read(math.random(300)) or ""
    fd:close()
    return str
 end
@@ -30,7 +30,7 @@ end
 local j = 10
 
 while j > 0 do
-   t1(sha2.Sha224, sha2.sha224, math.random(4,10))
-   t1(sha2.Sha256, sha2.sha256, math.random(4,10))
+   t1(sha2.Sha224, sha2.sha224, math.random(4, 40))
+   t1(sha2.Sha256, sha2.sha256, math.random(4, 40))
    j = j - 1
 end

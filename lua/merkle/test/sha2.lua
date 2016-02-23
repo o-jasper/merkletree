@@ -75,8 +75,10 @@ assert(enhex(parts(s, 7)) ==
 assert(enhex(parts(s, #s + 10)) ==
   "736c7a8b17e2cfd44a3267a844db1a8a3e8988d739e3e95b8dd32678fb599139")
 
-
-
+local abc = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
+for i = 0, #abc do
+   print(sha2_hex.sha256(string.sub(abc, 1,i)))
+end
 
 -- read a file and prints its hash, if given a file name
 

@@ -62,69 +62,69 @@ end
 -- append length of message (before pre-processing), in bits, as 64-bit
 -- big-endian integer
 local function preproc (msg, len)
-  local extra = -(len + 1 + 8) % 64
-  len = num2s(8 * len, 8)    -- original len in bits, coded
-  msg = msg .. "\128" .. string.rep("\0", extra) .. len
-  assert(#msg % 64 == 0)
-  return msg
+   local extra = -(len + 1 + 8) % 64
+   len = num2s(8 * len, 8)    -- original len in bits, coded
+   msg = msg .. "\128" .. string.rep("\0", extra) .. len
+   assert(#msg %64 == 0)
+   return msg
 end
 
 
 local function initH224 ()
-  local H = {}
-  -- (second 32 bits of the fractional parts of the square roots of the
-  -- 9th through 16th primes 23..53)
-  H[1] = 0xc1059ed8
-  H[2] = 0x367cd507
-  H[3] = 0x3070dd17
-  H[4] = 0xf70e5939
-  H[5] = 0xffc00b31
-  H[6] = 0x68581511
-  H[7] = 0x64f98fa7
-  H[8] = 0xbefa4fa4
-  return H
+   local H = {}
+   -- (second 32 bits of the fractional parts of the square roots of the
+   -- 9th through 16th primes 23..53)
+   H[1] = 0xc1059ed8
+   H[2] = 0x367cd507
+   H[3] = 0x3070dd17
+   H[4] = 0xf70e5939
+   H[5] = 0xffc00b31
+   H[6] = 0x68581511
+   H[7] = 0x64f98fa7
+   H[8] = 0xbefa4fa4
+   return H
 end
 
 
 local function initH256()
-  local H = {}
-  -- (first 32 bits of the fractional parts of the square roots of the
-  -- first 8 primes 2..19):
-  H[1] = 0x6a09e667
-  H[2] = 0xbb67ae85
-  H[3] = 0x3c6ef372
-  H[4] = 0xa54ff53a
-  H[5] = 0x510e527f
-  H[6] = 0x9b05688c
-  H[7] = 0x1f83d9ab
-  H[8] = 0x5be0cd19
-  return H
+   local H = {}
+   -- (first 32 bits of the fractional parts of the square roots of the
+   -- first 8 primes 2..19):
+   H[1] = 0x6a09e667
+   H[2] = 0xbb67ae85
+   H[3] = 0x3c6ef372
+   H[4] = 0xa54ff53a
+   H[5] = 0x510e527f
+   H[6] = 0x9b05688c
+   H[7] = 0x1f83d9ab
+   H[8] = 0x5be0cd19
+   return H
 end
 
 
 local function digestblock (msg, i, H)
 
-    -- break chunk into sixteen 32-bit big-endian words w[1..16]
-    local w = {}
-    for j = 1, 16 do
+   -- break chunk into sixteen 32-bit big-endian words w[1..16]
+   local w = {}
+   for j = 1, 16 do
       w[j] = s232num(msg, i + (j - 1)*4)
-    end
+   end
 
-    -- Extend the sixteen 32-bit words into sixty-four 32-bit words:
-    for j = 17, 64 do
+   -- Extend the sixteen 32-bit words into sixty-four 32-bit words:
+   for j = 17, 64 do
       local v = w[j - 15]
       local s0 = bxor(rrotate(v, 7), rrotate(v, 18), rshift(v, 3))
       v = w[j - 2]
       local s1 = bxor(rrotate(v, 17), rrotate(v, 19), rshift(v, 10))
       w[j] = w[j - 16] + s0 + w[j - 7] + s1
-    end
+   end
 
-    -- Initialize hash value for this chunk:
-    local a, b, c, d, e, f, g, h =
-        H[1], H[2], H[3], H[4], H[5], H[6], H[7], H[8]
+   -- Initialize hash value for this chunk:
+   local a, b, c, d, e, f, g, h =
+      H[1], H[2], H[3], H[4], H[5], H[6], H[7], H[8]
 
-    -- Main loop:
-    for i = 1, 64 do
+   -- Main loop:
+   for i = 1, 64 do
       local s0 = bxor(rrotate(a, 2), rrotate(a, 13), rrotate(a, 22))
       local maj = bxor(band(a, b), band(a, c), band(b, c))
       local t2 = s0 + maj
@@ -140,60 +140,60 @@ local function digestblock (msg, i, H)
       c = b
       b = a
       a = t1 + t2
-    end
+   end
 
-    -- Add (mod 2^32) this chunk's hash to result so far:
-    H[1] = band(H[1] + a)
-    H[2] = band(H[2] + b)
-    H[3] = band(H[3] + c)
-    H[4] = band(H[4] + d)
-    H[5] = band(H[5] + e)
-    H[6] = band(H[6] + f)
-    H[7] = band(H[7] + g)
-    H[8] = band(H[8] + h)
+   -- Add (mod 2^32) this chunk's hash to result so far:
+   H[1] = band(H[1] + a)
+   H[2] = band(H[2] + b)
+   H[3] = band(H[3] + c)
+   H[4] = band(H[4] + d)
+   H[5] = band(H[5] + e)
+   H[6] = band(H[6] + f)
+   H[7] = band(H[7] + g)
+   H[8] = band(H[8] + h)
 
 end
 
 
 local function finalresult224 (H)
-  -- Produce the final hash value (big-endian):
+   -- Produce the final hash value (big-endian):
    return num2s(H[1], 4)..num2s(H[2], 4)..num2s(H[3], 4)..num2s(H[4], 4)..
       num2s(H[5], 4)..num2s(H[6], 4)..num2s(H[7], 4)
 end
 
 
 local function finalresult256 (H)
-  -- Produce the final hash value (big-endian):
-  return num2s(H[1], 4)..num2s(H[2], 4)..num2s(H[3], 4)..num2s(H[4], 4)..
-     num2s(H[5], 4)..num2s(H[6], 4)..num2s(H[7], 4)..num2s(H[8], 4)
+   -- Produce the final hash value (big-endian):
+   return num2s(H[1], 4)..num2s(H[2], 4)..num2s(H[3], 4)..num2s(H[4], 4)..
+      num2s(H[5], 4)..num2s(H[6], 4)..num2s(H[7], 4)..num2s(H[8], 4)
 end
 
 
 ----------------------------------------------------------------------
 
 local function hash224 (msg)
-  msg = preproc(msg, #msg)
-  local H = initH224()
+   msg = preproc(msg, #msg)
+   local H = initH224()
 
-  -- Process the message in successive 512-bit (64 bytes) chunks:
-  for i = 1, #msg, 64 do
-    digestblock(msg, i, H)
-  end
+   -- Process the message in successive 512-bit (64 bytes) chunks:
+   for i = 1, #msg, 64 do
+      digestblock(msg, i, H)
+   end
 
-  return finalresult224(H)
+   return finalresult224(H)
 end
 
 
 local function hash256 (msg)
-  msg = preproc(msg, #msg)
-  local H = initH256()
+   msg = preproc(msg, #msg)
+   local H = initH256()
 
-  -- Process the message in successive 512-bit (64 bytes) chunks:
-  for i = 1, #msg, 64 do
-    digestblock(msg, i, H)
-  end
+   -- Process the message in successive 512-bit (64 bytes) chunks:
+   for i = 1, #msg, 64 do
+      digestblock(msg, i, H)
+   end
 
-  return finalresult256(H)
+   return finalresult256(H)
 end
 
 -- Object you can feed hashes too.
