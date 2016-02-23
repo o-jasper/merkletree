@@ -9,7 +9,7 @@ local This = {}
 This.__index = This
 
 function This:new(new)
-   setmetatable(new, self)
+   new = setmetatable(new or {}, self)
    new:init()
    return new
 end

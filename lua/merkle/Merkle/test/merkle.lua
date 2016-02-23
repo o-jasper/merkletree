@@ -44,8 +44,12 @@ local function change_random_bit(proof)
    local j = math.random(#proof[i])
 
    -- Change one bit, now the proof should be invalid.
-   local mod = string.char((string.byte(proof[i], j) + 2^(math.random(8)-1))%256)
-   proof[i] = string.sub(proof[i], 1, i-1) .. mod .. string.sub(proof[i], i + 1)
+   local n, x = math.random(7), string.byte(proof[i], j)
+   local mod = string.char((x + (2^n))%256)
+   local new_val = string.sub(proof[i], 1, j-1) .. mod .. string.sub(proof[i], j + 1)
+   assert( new_val ~= proof[i], string.format("Didnt change the proof(%d,%s)?\n%s\n%s",
+                                              n,x, proof[i], new_val))
+   proof[i] = new_val
 end
 
 -- TODO Proofs that _do_not_ work out.
