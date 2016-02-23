@@ -238,6 +238,11 @@ function Hash256:add(m)
    self.msg = self.msg:sub(t + 1, -1)
 end
 
+-- For simularity with MerkleTree.
+function Hash256:add_key(key, data)
+   return self:add(key .. data)
+end
+
 function Hash256:close()
    self.msg = preproc(self.msg, self.len)
    self:add("")

@@ -23,7 +23,32 @@ end
 -- Statementize.hash
 Statementize.encode = require("storebin").encode
 
-function Statementize:hash(tree) return self.H(self.encode(tree)) end
+local function hashtree(self, tree, front)
+
+   local encode = self.encode
+
+   local function hashtree_val(key, val)
+      if type(val) == "table" then  -- Recurse into branch.
+         hashtree(self, val, front .. encode(key))
+      else
+         self:add_key(front .. encode(key), encode(val))
+      end
+   end
+
+   local into = { number={}, string={} }
+   for k in pairs(tree) do
+      local list = into[type(k)]
+      assert(list, "Only number or string keys")
+      table.insert(list, k)
+   end
+
+   for _,list in ipairs{into.number, into.string} do -- `pairs(into)` wont do!
+      table.sort(list)
+      for _, k in ipairs(list) do hashtree_val(k, tree[k]) end
+   end
+end
+
+function Statementize:hash(tree) return hashtree(self, tree, "") end
 
 local b64 = require "page_html.util.fmt.base64"
 

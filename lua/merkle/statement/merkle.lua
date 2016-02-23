@@ -1,4 +1,4 @@
-local StatementizeMerkle = require "merkle.statement.StatementizeMerkle"
+local StatementizeMerkle = require "merkle.statement.Statementize"
 local sha2 = require "merkle.sha2"
 
 return {
