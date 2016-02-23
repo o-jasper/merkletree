@@ -30,7 +30,7 @@ test_merkle_devrandom:
 test_merkle_lua:
 	lua Merkle/test/merkle.lua
 
-# TODO test merkle version stuff of statement, identical-input.
+# TODO test merkle version stuff of statement
 test_statement:  # Just runs it, really.
 	lua statement/test/statement.lua
 

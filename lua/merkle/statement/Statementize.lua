@@ -56,6 +56,9 @@ local function hashtree(self, tree, front)
       local list = into[type(k)]
       assert(list, "Only number or string keys, got; " .. type(k))
       table.insert(list, k)
+--      if #list > 0 then  -- Switch to this to check `pairs` indetermism doesnt matter.
+--         table.insert(list, math.random(#list), k)
+--      end
    end
 
    if #into.number == 0 and #into.string == 0 then  -- Completely empty. I reserve __em

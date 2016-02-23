@@ -33,8 +33,10 @@ local function run_1(Which, tree)
    tree = tree or gen_tree(true, 5, {mini=1, maxi=102, no_boolean=true})
    tree.nonce = nil  -- Just in case.
 
-   local inst = Which:new()
-   print(inst:make(tree))
+   local r1 = Which:new():make(tree)
+-- Really kindah only means anything if `pairs` not deterministic.
+--   assert(r1 == Which:new():make(tree))
+   print(r1)
 end
 
 -- sha2 does not work with incorrect init.
