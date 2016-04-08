@@ -34,7 +34,7 @@ local function rand_str(lmin, lmax)
       end
       return table.concat(ret)
    else
-      random_fd = random_fd or io.open(arg[1])
+      random_fd = random_fd or io.open(arg[1]) or io.open("/dev/random")
       return random_fd:read(n)
    end
 end

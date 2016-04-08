@@ -1,16 +1,20 @@
 local sha2 = require 'merkle.sha2'
 
-assert(sha2.Sha224.fun == sha2.sha224)
-assert(sha2.Sha224.__name == "Hash224", sha2.Sha224.__name)
-
-assert(sha2.Sha256.fun == sha2.sha256)
-assert(sha2.Sha256.__name == "Hash256")
-
-local function gstr()
-   local fd = io.open("/dev/random")
-   local str = fd:read(math.random(300)) or ""
-   fd:close()
-   return str
+local function gstr(n)
+   local n = n or 300
+   if io then
+      local fd = io.open("/dev/random")
+      local str = fd:read(math.random(n)) or ""
+      fd:close()
+      return str
+   else
+      if os then math.randomseed(os.time() + 100*os.clock()) end
+      local str, len = "", math.random(n)
+      while #str < len do
+         str = str .. string.char(math.random(256) - 1)
+      end
+      return str
+   end
 end
 
 local function t1(Class, fun, n)

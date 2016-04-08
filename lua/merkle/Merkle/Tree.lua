@@ -10,7 +10,7 @@
 local MerkleNode = require "merkle.Merkle.Node"
 local MerkleVerify = require "merkle.Merkle.Verify"
 
-local This = {}
+local This = { __constant=true }
 
 for _,k in ipairs{"new", "class_pairify"} do This[k] = MerkleVerify[k] end
 

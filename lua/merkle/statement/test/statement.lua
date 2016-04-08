@@ -63,7 +63,6 @@ run_1(statement_merkle.Sha224)
 run_1(statement_merkle.Sha224N)
 
 -- "Damage" one to look if `pairs` indeterminism can break it.
-print("INDETERMINISM")
 local function hashtree(self, tree, front)
 
    local encode = self.encode

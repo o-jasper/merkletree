@@ -32,6 +32,6 @@ test_merkle_lua:
 
 # TODO test merkle version stuff of statement
 test_statement:  # Just runs it, really.
-	lua statement/test/statement.lua
+	lua statement/test/statement.lua /dev/random
 
 # test_merkle_bin  ... TODO combine with go test?

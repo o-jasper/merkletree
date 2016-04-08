@@ -197,7 +197,7 @@ local function hash256 (msg)
 end
 
 -- Object you can feed hashes too.
-local Hash256 = {}
+local Hash256 = { __constant = true }
 Hash256.__index = Hash256
 Hash256.__name  = "Hash256"
 
@@ -261,6 +261,8 @@ Hash224.init_H      = initH224
 Hash224.finalresult = finalresult224
 
 return {
+   __constant = true,
+
   sha224 = hash224,
   sha256 = hash256,
 

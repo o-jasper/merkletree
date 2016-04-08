@@ -1,4 +1,4 @@
-local This = {}
+local This = { __constant=true }
 This.__index = This
 
 function This:new(new)

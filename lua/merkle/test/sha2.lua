@@ -5,9 +5,15 @@ local enhex = require "merkle.enhex"
 
 local sha2_hex = {}
 
+assert(enhex(sha2.sha224"The quick brown fox jumps over the lazy dog") ==
+  "730e109bd7a8a32b1cb9d9a09aa2325d2430587ddbc0c38bad911525")
+
+print("--- hexifying the functions")
 for k,v in pairs(sha2) do
    sha2_hex[k] = function(...) return enhex(v(...)) end
 end
+
+print("-- examples")
 -- a few examples from the Web
 
 assert(sha2_hex.sha224"The quick brown fox jumps over the lazy dog" ==
@@ -23,9 +29,6 @@ assert(sha2_hex.sha256"The quick brown fox jumps over the lazy cog" ==
   "e4c4d8f3bf76b692de791a173e05321150f7a345b46484fe427f6acc7ecc81be")
 
 assert(sha2_hex.sha256"" ==
-  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
-
-assert(enhex(sha2.Sha256:new():close()) ==
   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
 
 assert(sha2_hex.sha256"123456" ==
@@ -47,13 +50,20 @@ assert(sha2_hex.sha256(string.rep('a', 64) .. '\n') ==
 assert(sha2_hex.sha256(string.rep('a', 65) .. '\n') ==
   "574883a9977284a46845620eaa55c3fa8209eaa3ebffe44774b6eb2dba2cb325")
 
+print("-- Via class")
+
+assert(enhex(sha2.Sha256:new():close()) ==
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+
+print("-- Through first class example")
+
 local x = sha2.Sha256:new()
 for i = 1, 65 do x:add('a') end
 x:add('\n')
 assert(enhex(x:close()) ==
   "574883a9977284a46845620eaa55c3fa8209eaa3ebffe44774b6eb2dba2cb325")
 
-
+print("-- Larger stuff")
 -- some large files
 local function parts (s, j)
   local x = sha2.Sha256:new()
@@ -82,14 +92,18 @@ end
 
 -- read a file and prints its hash, if given a file name
 
-if arg[1] then
-  local file = assert(io.open (arg[1], 'rb'))
-  local x = sha2.Sha256:new()
-  for b in file:lines(2^12) do
-    x:add(b)
+if arg and arg[1] then
+  local fd = io.open(arg[1], 'rb')
+  if fd then
+     local x = sha2.Sha256:new()
+     for b in fd:lines(2^12) do
+        x:add(b)
+     end
+     fd:close()
+     print(x:close())
+  else
+     print("no file")
   end
-  file:close()
-  print(x:close())
 end
 
 print "ok"

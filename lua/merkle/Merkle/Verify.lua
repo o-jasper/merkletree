@@ -5,7 +5,7 @@
 --  by the Free Software Foundation, either version 3 of the License, or
 --  (at your option) any later version.
 
-local This = {}
+local This = { __constant=true }
 This.__index = This
 
 function This:new(new)
