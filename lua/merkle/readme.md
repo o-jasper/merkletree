@@ -29,6 +29,7 @@ comparing it with the commands `sha224sum` and `sha256sum`.
 Merkle trees are merely tested by making the tree and true/false proofs,
 and checking for no false negatives/positives.
 
+Statements are tested, no testing for false positives yet.
 
 It is important to know what is actually tested. These tests run on
 random data and examples. It might be good to look for edge cases.
@@ -40,5 +41,7 @@ random data and examples. It might be good to look for edge cases.
 
 * The Merkle statements are derived from the merkle tree, thus it
   can be tested whether the merkle aspect infacts works properly.
+
+* Test against statements false positives.
 
 * Compare with the go implementation.
